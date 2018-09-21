@@ -114,11 +114,7 @@ Function Get-Telnet
     {   $Result = "Unable to connect to host: $($RemoteHost):$Port"
     }
     #Done, now save the results to a file
-    $Result2 = ((($Result | out-string -Stream) -split '`r`n')) | Select-Object -skip 7
-    Write-Host $Result2 -ForegroundColor Red
+    $Res = ($Result -split '`r`n') -split 'DeviceName'
+    Write-Host $Res -ForegroundColor Red
     #($Result | Out-String) -split '`r`n'
 }
-vdfg
-sd
-f
-s
