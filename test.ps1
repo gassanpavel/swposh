@@ -100,7 +100,7 @@ Function Get-Telnet
         }
         #All commands issued, but since the last command is usually going to be
         #the longest let's wait a little longer for it to finish
-        Start-Sleep ($WaitTime * 2)
+        #Start-Sleep ($WaitTime * 2)
         $Result = ""
         #Save all the results
         While($Stream.DataAvailable) 
@@ -114,7 +114,5 @@ Function Get-Telnet
     {   $Result = "Unable to connect to host: $($RemoteHost):$Port"
     }
     #Done, now save the results to a file
-    $Res = ($Result -split '`r`n') -split 'DeviceName'
-    Write-Host $Res -ForegroundColor Red
-    #($Result | Out-String) -split '`r`n'
+    $Result -replace "\\","\\" | Select-String -Pattern '(?s)(DeviceName="HA.*?\n).*?\n(ScsiLun.*?)\r' -AllMatches | ForEach-Object{ $_.Matches.Value } | ConvertFrom-StringData
 }
