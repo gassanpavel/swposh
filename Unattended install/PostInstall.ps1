@@ -8,21 +8,19 @@ $StarWindVSANDownloadUri =      'https://www.starwindsoftware.com/tmplink/starwi
 $StarWindHealthDownloadUri =    'https://www.starwindsoftware.com/tmplink/starwindhealthservice.zip'
 
 
-### Allow install modules from PSGallery
+### Allow install modules from PSGallery to install powercli module
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 
 ### Download and install C++ Redistribution
 if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
     try{
+        ### Download C++ Redistribution
         Write-Host "Downloading Visual C++ Redistribution" -NoNewline
         Start-BitsTransfer -Source $VCppDownloadUri -Destination "$Global:ScriptDir\VC_redist.x64.exe" `
             -Description "Downloading Visual C++ Redistribution"
         Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`n$_" -ForegroundColor Red
-    }
-    try{
+        
+        ### Install C++ Redistribution
         Write-Host "Installing Visual C++ Redistribution" -NoNewline
         Start-Process -FilePath "$Global:ScriptDir\VC_redist.x64.exe" -ArgumentList '/install /quite /norestart' -Wait
         Write-Host "`tOK" -ForegroundColor Green
@@ -41,13 +39,9 @@ if ((Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer -like 'VMware
         Start-BitsTransfer -Source ($VMwareDownloadUri.Replace('index.html', $VMwareToolsVersion)) -Destination "$Global:ScriptDir\$VMwareToolsVersion" `
             -Description "Downloading latest Vmware tools"
         Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`n$_" -ForegroundColor Red
-    }
-        
+     
     ### Install VMware tools
-    try{
+    
         Write-Host "Installing VMware tools" -NoNewline
         Start-Process -FilePath "$Global:ScriptDir\$VMwareToolsVersion"-ArgumentList '/S /v "/qn REBOOT=R ADDLOCAL=ALL"' -Wait
         Write-Host "`tOK" -ForegroundColor Green
@@ -66,8 +60,9 @@ if ((Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer -like 'VMware
         Write-Host "`n$_" -ForegroundColor Red
     }
 
-    
     ### Create rescan_script
+    ########################
+    ########################
 
 }
 else{ ### Baremetal part of postinstall
@@ -77,21 +72,15 @@ else{ ### Baremetal part of postinstall
         Start-BitsTransfer -Source $OMSADownloadUri -Destination "$Global:ScriptDir\OM-SrvAdmin-Dell-Web-WINX64-9.2.0-3142_A00.zip" `
             -Description "Downloading DELL OMSA"
         Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`n$_" -ForegroundColor Red
-    }
+    
     ### Extracting Dell OMSA
-    try{
+    
         Write-Host "Extract OMSA" -NoNewline
         Expand-Archive -Path "$Global:ScriptDir\OM-SrvAdmin-Dell-Web-WINX64-9.2.0-3142_A00.zip" -DestinationPath "$Global:ScriptDir\OMSA" -Force
         Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`n$_" -ForegroundColor Red
-    }
+    
     ### Installing Dell OMSA
-    try{
+    
         Write-Host "Installing OMSA" -NoNewline
         Start-Process -FilePath "$Global:ScriptDir\OMSA\windows\SystemsManagementx64\SysMgmtx64.msi" -ArgumentList 'ADDLOCAL=ALL /qn' -Wait
         Write-Host "`tOK" -ForegroundColor Green
@@ -101,7 +90,9 @@ else{ ### Baremetal part of postinstall
     }
 
     ### Download Mellanox WinOF/WinOF2 drivers
-    
+    if ((Get-NetAdapter).InterfaceDescription){
+
+    }
 }
 
 ### Download latest StarWindHealthService
@@ -110,12 +101,9 @@ try{
     Start-BitsTransfer -Source $StarWindHealthDownloadUri -Destination "$Global:ScriptDir\starwindhealthservice.zip" `
         -Description "Downloading latest StarWindHealthService"
     Write-Host "`tOK" -ForegroundColor Green
-}
-catch{
-    Write-Host "`n$_" -ForegroundColor Red
-}
+
 ### Extracting StarWindHealthService
-try{
+
     Write-Host "Extract StarWindHealthService" -NoNewline
     Expand-Archive -Path "$Global:ScriptDir\starwindhealthservice.zip" -DestinationPath "$Global:ScriptDir" -Force
     Expand-Archive -Path "$Global:ScriptDir\starwindhealthservice\starwindhealthservice.zip" -DestinationPath "$Global:ScriptDir\starwindhealthservice" -Force
@@ -125,12 +113,9 @@ try{
     ### which is responsible for the operation of the FTP server, 
     ### cannot change MIME types so that the archived file is downloaded by the archive without changes ... ((((
     Write-Host "`tOK" -ForegroundColor Green
-}
-catch{
-    Write-Host "`n$_" -ForegroundColor Red
-}
+
 ### Installing StarWindHealthService
-try{
+
     Write-Host "Installing StarWindHealthService" -NoNewline
     Start-Process -FilePath "$Global:ScriptDir\starwindhealthservice\starwindhealthservice.exe" `
         -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /LOG="D:\sw.log"' -Wait
