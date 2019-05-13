@@ -44,6 +44,7 @@ function OpenIsoFile{
     If($openFile.ShowDialog() -eq "OK"){
         Write-Output  "File $($openfile.FileName) selected"
         $ISO = $openFile.FileName
+        return $ISO
     }
     else {
         Write-Host  "Iso was not selected... Exitting" -ForegroundColor Yellow
@@ -55,10 +56,11 @@ function OpenFile{
     $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
         Title="Please select Postinstall script"
     }
-    $openFile.Filter = "iso files (*.iso)|*.iso|All files (*.*)|*.*" 
+    $openFile.Filter = "ps1 files (*.ps1)|*.ps1|All files (*.*)|*.*" 
     If($openFile.ShowDialog() -eq "OK"){
         Write-Output  "File $($openfile.FileName) selected"
         $File = $openFile.FileName
+        return $File
     }
     else {
         Write-Host  "Iso was not selected... Exitting" -ForegroundColor Yellow
@@ -191,7 +193,7 @@ foreach($image in $IMAGES){
     foreach($upd in $update.Name){
         try {
             Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$upd]" -nonewline
-            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$upd" -ScratchDirectory "$TMP\" -LogLevel 2
+            ###Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$upd" -ScratchDirectory "$TMP\" -LogLevel 2
             Write-Host "`t[OK]" -Foregroundcolor green
         } catch {
             Write-Host "`t[Error]`n" -ForegroundColor Red
@@ -199,8 +201,10 @@ foreach($image in $IMAGES){
         }
     }
     try {
-        Write-Host "Integrating POSTINSTALL script"
-        Copy-WithProgress -Source "D:\DEV\swposh\Unattended install\PostInstall.ps1" -Destination "$WIM_MOUNT_DIR\"
+        Write-Host "Integrating POSTINSTALL script" -NoNewline
+        Copy-WithProgress -Source OpenFile -Destination "$WIM_MOUNT_DIR\"
+        Write-Host "`t[OK]" -Foregroundcolor green
+        
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline
         Dismount-WindowsImage -Path $WIM_MOUNT_DIR -Save -ScratchDirectory "$TMP\" -CheckIntegrity  -LogLevel 2 | Out-Null
         Write-Host "`t[OK]" -Foregroundcolor green
