@@ -4,7 +4,7 @@
 Import-Module LatestUpdate
 Import-Module BitsTransfer
 
-$ISO = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US.ISO"
+$ISO = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[26042019].ISO"
 
 Function Copy-WithProgress{
     [CmdletBinding()]
@@ -44,11 +44,27 @@ function OpenIsoFile{
     If($openFile.ShowDialog() -eq "OK"){
         Write-Output  "File $($openfile.FileName) selected"
         $ISO = $openFile.FileName
-    } 
+    }
     else {
         Write-Host  "Iso was not selected... Exitting" -ForegroundColor Yellow
     }
 }
+
+function OpenFile{
+    [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | out-null
+    $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
+        Title="Please select Postinstall script"
+    }
+    $openFile.Filter = "iso files (*.iso)|*.iso|All files (*.*)|*.*" 
+    If($openFile.ShowDialog() -eq "OK"){
+        Write-Output  "File $($openfile.FileName) selected"
+        $File = $openFile.FileName
+    }
+    else {
+        Write-Host  "Iso was not selected... Exitting" -ForegroundColor Yellow
+    }
+}
+
 function informmsg{
     [CmdletBinding()]
     Param
@@ -61,7 +77,7 @@ function informmsg{
     Write-Host "###`n$msg" -ForegroundColor DarkMagenta
 }
 
-if(!(Test-Path $ISO)){
+if(!(Test-Path -LiteralPath $ISO)){
     OpenIsoFile
 }
 
@@ -70,20 +86,18 @@ informmsg "Mounting [$ISO]"
 if ((Get-DiskImage -ImagePath $ISO).Attached -like 'False'){
     Mount-DiskImage -ImagePath $ISO
     $MOUNTED_ISO_DRIVE_LETTER = (Get-DiskImage -ImagePath $ISO | Get-Volume).DriveLetter +":\"
-    Write-Host "### [$ISO] file already mounted, drive letter is: " -ForegroundColor Blue -NoNewline
+    Write-Host "### [$ISO] file already mounted, drive letter is: " -NoNewline
     Write-Host "`t[$MOUNTED_ISO_DRIVE_LETTER]" -ForegroundColor Green
 } 
 else{
-    Write-Host "###[$ISO] file already mounted, drive letter is: " -ForegroundColor Blue -NoNewline
+    Write-Host "###[$ISO] file already mounted, drive letter is: " -NoNewline
     $MOUNTED_ISO_DRIVE_LETTER = (Get-DiskImage -ImagePath $ISO | Get-Volume).DriveLetter +":\"
     Write-Host "`t[$MOUNTED_ISO_DRIVE_LETTER]" -ForegroundColor Green
 }
 
-
-
 ### create folder structure
 informmsg "Create folders structure"
-$ISO_PARENT_DIR = (Get-ChildItem $ISO).DirectoryName
+$ISO_PARENT_DIR = (split-path $ISO)
 $EXTRACT_DIR = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR = "$ISO_PARENT_DIR\BUILD\LCU"
 $OUTPUT_DIR =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
@@ -106,7 +120,7 @@ if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
     Copy-WithProgress -Source $MOUNTED_ISO_DRIVE_LETTER -Destination  "$EXTRACT_DIR\"
     informmsg "Get OS build version from WIM"
     While ($true){
-        if (!(Test-Path "$EXTRACT_DIR\sources\install.wim")){
+        if (!(Test-Path -LiteralPath "$EXTRACT_DIR\sources\install.wim")){
             Start-Sleep -Seconds 1
         }
         else{
@@ -115,10 +129,12 @@ if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
             # Write-Host "`tOK" -foregroundcolor Green
             #$WIM_PATH = "$TMP\install.wim"
             $WIM_PATH = "$EXTRACT_DIR\sources\install.wim"
+            Unblock-File -LiteralPath $WIM_PATH
+            Set-ItemProperty -LiteralPath $WIM_PATH -name IsReadOnly -value $false
             $OS_BUILD_VERSION = (Get-WindowsImage -ImagePath $WIM_PATH -index 1).version.Split(".")[-2]
             Write-Host "OS build version [$OS_BUILD_VERSION]" -foregroundcolor green
             try{
-                Write-Host "#Unmouning [$ISO] from [$MOUNTED_ISO_DRIVE_LETTER]" -ForegroundColor Blue -NoNewline
+                Write-Host "#Unmouning [$ISO] from [$MOUNTED_ISO_DRIVE_LETTER]" -NoNewline
                 Dismount-DiskImage -ImagePath $ISO
                 Write-Host "`tOK" -ForegroundColor Green
             } catch {
@@ -129,12 +145,27 @@ if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
         }
     }
 }
+else{
+    $WIM_PATH = "$EXTRACT_DIR\sources\install.wim"
+    Unblock-File -LiteralPath $WIM_PATH
+    Set-ItemProperty -LiteralPath $WIM_PATH -name IsReadOnly -value $false
+    $OS_BUILD_VERSION = (Get-WindowsImage -ImagePath $WIM_PATH -index 1).version.Split(".")[-2]
+    Write-Host "OS build version [$OS_BUILD_VERSION]" -foregroundcolor green
+    try{
+        Write-Host "#Unmouning [$ISO] from [$MOUNTED_ISO_DRIVE_LETTER]" -NoNewline
+        Dismount-DiskImage -ImagePath $ISO
+        Write-Host "`tOK" -ForegroundColor Green
+    } catch {
+        Write-Host "`t[Error]`n" -ForegroundColor Red
+        $_
+    }
+}
 
 ### Download latest Cumulative update 
 informmsg "Check latest Cumulative update in [$LCU_DIR]"
 $UPDATE_PAKCAGE_NAME = ((Get-LatestUpdate -Build $OS_BUILD_VERSION | Where-Object{$_.Note -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
 if(!(Test-Path $LCU_DIR/$UPDATE_PAKCAGE_NAME)){
-    Write-Host "[$UPDATE_PAKCAGE_NAME] NOT exist and will be downloaded" -ForegroundColor Cyan
+    Write-Host "[$UPDATE_PAKCAGE_NAME] NOT exist and will be downloaded"
     Start-BitsTransfer -Source (Get-LatestUpdate -Build $OS_BUILD_VERSION  | Where-Object{$_.Note -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL -Destination $LCU_DIR
 }
 else{
@@ -149,28 +180,30 @@ foreach($image in $IMAGES){
     $imgIndex = $image.ImageIndex
     Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -foregroundcolor Green
     try {
-        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Mount [$WIM_PATH] image ["$image.ImageName"] with index ["$image.ImageIndex"] to [$WIM_MOUNT_DIR]" -ForegroundColor Blue -NoNewline
-        Mount-WindowsImage -ImagePath $WIM_PATH -Index $imgIndex -Path $WIM_MOUNT_DIR -ScratchDirectory "$TMP\" -LogLevel 2
+        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Mount [$WIM_PATH] image ["$image.ImageName"] with index ["$image.ImageIndex"] to [$WIM_MOUNT_DIR]" -NoNewline
+        Mount-WindowsImage -ImagePath $WIM_PATH -Index $imgIndex -Path $WIM_MOUNT_DIR -ScratchDirectory "$TMP\" -LogLevel 2 | Out-Null
 
-        Write-Host "`t[OK]" -foregroundcolor green
+        Write-Host "`t[OK]" -Foregroundcolor green
     } catch {
         Write-Host "`t[Error]`n" -ForegroundColor Red
         $_
     }
     foreach($upd in $update.Name){
         try {
-            Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$upd]" -foregroundcolor Blue -nonewline
+            Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$upd]" -nonewline
             Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$upd" -ScratchDirectory "$TMP\" -LogLevel 2
-            Write-Host "`t[OK]" -foregroundcolor green
+            Write-Host "`t[OK]" -Foregroundcolor green
         } catch {
             Write-Host "`t[Error]`n" -ForegroundColor Red
             $_
         }
     }
     try {
-        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -foregroundcolor Blue -NoNewline
-        Dismount-WindowsImage -Path $WIM_MOUNT_DIR -Save -ScratchDirectory "$TMP\" -CheckIntegrity  -LogLevel 2
-        Write-Host "`t[OK]" -foregroundcolor green
+        Write-Host "Integrating POSTINSTALL script"
+        Copy-WithProgress -Source "D:\DEV\swposh\Unattended install\PostInstall.ps1" -Destination "$WIM_MOUNT_DIR\"
+        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline
+        Dismount-WindowsImage -Path $WIM_MOUNT_DIR -Save -ScratchDirectory "$TMP\" -CheckIntegrity  -LogLevel 2 | Out-Null
+        Write-Host "`t[OK]" -Foregroundcolor green
     } catch {
         Write-Host "`t[Error]`n" -ForegroundColor Red
         $_
