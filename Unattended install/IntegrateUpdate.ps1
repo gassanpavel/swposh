@@ -1,3 +1,4 @@
+Clear-Host
 ### Install-Module -Name LatestUpdate
 ### https://www.powershellgallery.com/packages/LatestUpdate/
 
@@ -21,7 +22,7 @@ Function Copy-WithProgress{
     )
 
     $Source=$Source.tolower()
-    $Filelist = Get-Childitem $Source –Recurse
+    $Filelist = Get-Childitem $Source -Recurse
     $Total=$Filelist.count
     $Position=0
 
@@ -36,34 +37,32 @@ Function Copy-WithProgress{
 }
 
 function OpenIsoFile{
-    [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | out-null
+    [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | Out-Null
     $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
         Title="Please select ISO image with Windows Server"
     }
     $openFile.Filter = "iso files (*.iso)|*.iso|All files (*.*)|*.*" 
     If($openFile.ShowDialog() -eq "OK"){
-        Write-Output  "File $($openfile.FileName) selected"
-        $ISO = $openFile.FileName
-        return $ISO
+        $openFile.FileName
     }
     else {
         Write-Host  "Iso was not selected... Exitting" -ForegroundColor Yellow
     }
 }
 
+
+
 function OpenFile{
     [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | out-null
-    $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
+    $openPSFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
         Title="Please select Postinstall script"
     }
-    $openFile.Filter = "ps1 files (*.ps1)|*.ps1|All files (*.*)|*.*" 
-    If($openFile.ShowDialog() -eq "OK"){
-        Write-Output  "File $($openfile.FileName) selected"
-        $File = $openFile.FileName
-        return $File
+    $openPSFile.Filter = "ps1 files (*.ps1)|*.ps1|All files (*.*)|*.*" 
+    If($openPSFile.ShowDialog() -eq "OK"){
+        $openPSFile.FileName
     }
     else {
-        Write-Host  "Iso was not selected... Exitting" -ForegroundColor Yellow
+        Write-Host  "File was not selected... Exitting" -ForegroundColor Yellow
     }
 }
 
@@ -80,7 +79,7 @@ function informmsg{
 }
 
 if(!(Test-Path -LiteralPath $ISO)){
-    OpenIsoFile
+    $ISO = OpenIsoFile
 }
 
 ### mount iso
@@ -150,7 +149,7 @@ if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
 else{
     $WIM_PATH = "$EXTRACT_DIR\sources\install.wim"
     Unblock-File -LiteralPath $WIM_PATH
-    Set-ItemProperty -LiteralPath $WIM_PATH -name IsReadOnly -value $false
+    Set-ItemProperty -LiteralPath $WIM_PATH -Name IsReadOnly -Value $false
     $OS_BUILD_VERSION = (Get-WindowsImage -ImagePath $WIM_PATH -index 1).version.Split(".")[-2]
     Write-Host "OS build version [$OS_BUILD_VERSION]" -foregroundcolor green
     try{
@@ -178,6 +177,7 @@ else{
 informmsg "`nIntegrating updates in [$WIM_PATH]"
 $IMAGES = Get-WindowsImage -ImagePath $WIM_PATH
 $update = Get-ChildItem $LCU_DIR | Select-Object -Property Name
+$PostInstallScript = OpenFile
 foreach($image in $IMAGES){
     $imgIndex = $image.ImageIndex
     Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -foregroundcolor Green
@@ -202,11 +202,12 @@ foreach($image in $IMAGES){
     }
     try {
         Write-Host "Integrating POSTINSTALL script" -NoNewline
-        Copy-WithProgress -Source OpenFile -Destination "$WIM_MOUNT_DIR\"
+        New-Item -ItemType Directory -Path $WIM_MOUNT_DIR -Name "HCA" -Force | Out-Null
+        Copy-WithProgress -Source $PostInstallScript -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor green
-        
+
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline
-        Dismount-WindowsImage -Path $WIM_MOUNT_DIR -Save -ScratchDirectory "$TMP\" -CheckIntegrity  -LogLevel 2 | Out-Null
+        Dismount-WindowsImage -Path $WIM_MOUNT_DIR -Save -ScratchDirectory "$TMP" -CheckIntegrity  -LogLevel 2 | Out-Null
         Write-Host "`t[OK]" -Foregroundcolor green
     } catch {
         Write-Host "`t[Error]`n" -ForegroundColor Red

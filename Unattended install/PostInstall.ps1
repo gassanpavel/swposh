@@ -38,7 +38,8 @@ if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
-        Write-Host "`n$_" -ForegroundColor Red
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 }
 
@@ -71,7 +72,8 @@ if (!(Test-Path -Path $Global:ScriptDir"\starwindhealthservice.zip")){
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
-        Write-Host "`n$_" -ForegroundColor Red
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 }
 ### Download latest StarWindVSAN build
@@ -83,7 +85,8 @@ if (!(Test-Path -Path $Global:ScriptDir"\starwind.exe")){
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
-        Write-Host "`n$_" -ForegroundColor Red
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 }
 ### Check manufacturer info - Baremetal or ESXi
@@ -117,7 +120,8 @@ if ($Manufacturer -like "VMware*") {
             Write-Host "`tOK" -ForegroundColor Green
         }
         catch{
-            Write-Host "`n$_" -ForegroundColor Red
+            Write-Host "`tError`n" -ForegroundColor Red
+            $_
         }
     }
     
@@ -140,7 +144,8 @@ if ($Manufacturer -like "VMware*") {
         $ESXiPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureStringESXiPassword))
     }
     catch{
-        write-host $_
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 
     ### Create HEALTH USER on ESXi host
@@ -168,7 +173,8 @@ if ($Manufacturer -like "VMware*") {
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
-        Write-Host "`n$_"
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
     
     ### Create rescan_script.ps1
@@ -222,7 +228,8 @@ else{ ### Baremetal part of postinstall
             Write-Host "`tOK" -ForegroundColor Green
         }
         catch{
-            Write-Host "`n$_" -ForegroundColor Red
+            Write-Host "`tError`n" -ForegroundColor Red
+            $_
         }
     }
     ### Download Mellanox WinOF drivers
@@ -242,7 +249,8 @@ else{ ### Baremetal part of postinstall
                     Write-Host "`tOK" -ForegroundColor Green
                 }
                 catch{
-                    Write-Host "`n$_" -ForegroundColor Red
+                    Write-Host "`tError`n" -ForegroundColor Red
+                    $_
                 }
             }
     }
@@ -264,7 +272,8 @@ else{ ### Baremetal part of postinstall
                 Write-Host "`tOK" -ForegroundColor Green
             }
             catch{
-                Write-Host "`n$_" -ForegroundColor Red
+                Write-Host "`tError`n" -ForegroundColor Red
+                $_
             }
         }
     }
@@ -291,7 +300,8 @@ else{ ### Baremetal part of postinstall
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
-        Write-Host "`n$_" -ForegroundColor Red
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 
     try{
@@ -302,7 +312,8 @@ else{ ### Baremetal part of postinstall
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
-        Write-Host "`n$_" -ForegroundColor Red
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 
     try{
@@ -313,6 +324,7 @@ else{ ### Baremetal part of postinstall
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
-        Write-Host "`n$_" -ForegroundColor Red
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 }
