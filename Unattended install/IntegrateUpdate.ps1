@@ -5,7 +5,15 @@ Clear-Host
 Import-Module LatestUpdate
 Import-Module BitsTransfer
 
-$ISO = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[26042019].ISO"
+$ISO                = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[26042019].ISO"
+$PostInstallScript  = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
+$UnattendXML        = "D:\DEV\swposh\Unattended install\Autounattend.xml"
+$ISO_PARENT_DIR     = (split-path -Parent $ISO)
+$EXTRACT_DIR        = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
+$LCU_DIR            = "$ISO_PARENT_DIR\BUILD\LCU"
+$OUTPUT_DIR         =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
+$WIM_MOUNT_DIR      = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
+$TMP                = "$ISO_PARENT_DIR\BUILD\TMP"
 
 Function Copy-WithProgress{
     [CmdletBinding()]
@@ -36,36 +44,6 @@ Function Copy-WithProgress{
     }
 }
 
-function OpenIsoFile{
-    [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | Out-Null
-    $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
-        Title="Please select ISO image with Windows Server"
-    }
-    $openFile.Filter = "iso files (*.iso)|*.iso|All files (*.*)|*.*" 
-    If($openFile.ShowDialog() -eq "OK"){
-        $openFile.FileName
-    }
-    else {
-        Write-Host  "Iso was not selected... Exitting" -ForegroundColor Yellow
-    }
-}
-
-
-
-function OpenFile{
-    [reflection.assembly]::loadwithpartialname("System.Windows.Forms") | out-null
-    $openPSFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
-        Title="Please select Postinstall script"
-    }
-    $openPSFile.Filter = "ps1 files (*.ps1)|*.ps1|All files (*.*)|*.*" 
-    If($openPSFile.ShowDialog() -eq "OK"){
-        $openPSFile.FileName
-    }
-    else {
-        Write-Host  "File was not selected... Exitting" -ForegroundColor Yellow
-    }
-}
-
 function informmsg{
     [CmdletBinding()]
     Param
@@ -76,10 +54,6 @@ function informmsg{
         $msg
     )
     Write-Host "###`n$msg" -ForegroundColor DarkMagenta
-}
-
-if(!(Test-Path -LiteralPath $ISO)){
-    $ISO = OpenIsoFile
 }
 
 ### mount iso
@@ -98,12 +72,6 @@ else{
 
 ### create folder structure
 informmsg "Create folders structure"
-$ISO_PARENT_DIR = (split-path $ISO)
-$EXTRACT_DIR = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
-$LCU_DIR = "$ISO_PARENT_DIR\BUILD\LCU"
-$OUTPUT_DIR =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
-$WIM_MOUNT_DIR = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
-$TMP = "$ISO_PARENT_DIR\BUILD\TMP"
 $FOLDERS=@("$EXTRACT_DIR", "$LCU_DIR", "$OUTPUT_DIR", "$WIM_MOUNT_DIR", "$TMP")
 
 foreach ($FOLDER in $FOLDERS){
@@ -125,10 +93,6 @@ if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
             Start-Sleep -Seconds 1
         }
         else{
-            # Write-Host "Move WIM file from [$EXTRACT_DIR] to [$TMP]" -foregroundcolor Blue -NoNewline
-            # Move-Item -Path "$EXTRACT_DIR\sources\install.wim" -Destination "$TMP\" -Force
-            # Write-Host "`tOK" -foregroundcolor Green
-            #$WIM_PATH = "$TMP\install.wim"
             $WIM_PATH = "$EXTRACT_DIR\sources\install.wim"
             Unblock-File -LiteralPath $WIM_PATH
             Set-ItemProperty -LiteralPath $WIM_PATH -name IsReadOnly -value $false
@@ -177,7 +141,6 @@ else{
 informmsg "`nIntegrating updates in [$WIM_PATH]"
 $IMAGES = Get-WindowsImage -ImagePath $WIM_PATH
 $update = Get-ChildItem $LCU_DIR | Select-Object -Property Name
-$PostInstallScript = OpenFile
 foreach($image in $IMAGES){
     $imgIndex = $image.ImageIndex
     Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -foregroundcolor Green
@@ -193,7 +156,7 @@ foreach($image in $IMAGES){
     foreach($upd in $update.Name){
         try {
             Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$upd]" -nonewline
-            ###Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$upd" -ScratchDirectory "$TMP\" -LogLevel 2
+            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$upd" -ScratchDirectory "$TMP\" -LogLevel 2
             Write-Host "`t[OK]" -Foregroundcolor green
         } catch {
             Write-Host "`t[Error]`n" -ForegroundColor Red
@@ -223,6 +186,7 @@ if (!(Test-Path $PATHTOOSCDIMG\oscdimg.exe)){
     Break
 }
 else{
+    Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
     $BOOTDATA = '2#p0,e,b"{0}"#pEF,e,b"{1}"' -f "$EXTRACT_DIR\boot\etfsboot.com","$EXTRACT_DIR\efi\Microsoft\boot\efisys_noprompt.bin"
     $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR","$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED.ISO") -PassThru -Wait -NoNewWindow
     if($Proc.ExitCode -ne 0)
