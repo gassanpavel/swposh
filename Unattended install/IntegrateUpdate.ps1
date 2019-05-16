@@ -14,6 +14,7 @@ $LCU_DIR            = "$ISO_PARENT_DIR\BUILD\LCU"
 $OUTPUT_DIR         =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
 $WIM_MOUNT_DIR      = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
 $TMP                = "$ISO_PARENT_DIR\BUILD\TMP"
+$WIM_PATH           = "$EXTRACT_DIR\sources\install.wim"
 
 Function Copy-WithProgress{
     [CmdletBinding()]
@@ -89,13 +90,12 @@ if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
     Copy-WithProgress -Source $MOUNTED_ISO_DRIVE_LETTER -Destination  "$EXTRACT_DIR\"
     informmsg "Get OS build version from WIM"
     While ($true){
-        if (!(Test-Path -LiteralPath "$EXTRACT_DIR\sources\install.wim")){
+        if (!(Test-Path -Path $WIM_PATH)){
             Start-Sleep -Seconds 1
         }
         else{
-            $WIM_PATH = "$EXTRACT_DIR\sources\install.wim"
-            Unblock-File -LiteralPath $WIM_PATH
-            Set-ItemProperty -LiteralPath $WIM_PATH -name IsReadOnly -value $false
+            Unblock-File -Path $WIM_PATH
+            Set-ItemProperty -Path $WIM_PATH -Name IsReadOnly -Value $false
             $OS_BUILD_VERSION = (Get-WindowsImage -ImagePath $WIM_PATH -index 1).version.Split(".")[-2]
             Write-Host "OS build version [$OS_BUILD_VERSION]" -foregroundcolor green
             try{
@@ -111,7 +111,6 @@ if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
     }
 }
 else{
-    $WIM_PATH = "$EXTRACT_DIR\sources\install.wim"
     Unblock-File -LiteralPath $WIM_PATH
     Set-ItemProperty -LiteralPath $WIM_PATH -Name IsReadOnly -Value $false
     $OS_BUILD_VERSION = (Get-WindowsImage -ImagePath $WIM_PATH -index 1).version.Split(".")[-2]
@@ -186,7 +185,7 @@ if (!(Test-Path $PATHTOOSCDIMG\oscdimg.exe)){
     Break
 }
 else{
-    Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
+    #Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
     $BOOTDATA = '2#p0,e,b"{0}"#pEF,e,b"{1}"' -f "$EXTRACT_DIR\boot\etfsboot.com","$EXTRACT_DIR\efi\Microsoft\boot\efisys_noprompt.bin"
     $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR","$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED.ISO") -PassThru -Wait -NoNewWindow
     if($Proc.ExitCode -ne 0)
