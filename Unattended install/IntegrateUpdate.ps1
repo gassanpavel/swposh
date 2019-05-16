@@ -21,6 +21,7 @@ $WIM_MOUNT_DIR      = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
 $TMP                = "$ISO_PARENT_DIR\BUILD\TMP"
 $WIM_PATH           = "$EXTRACT_DIR\sources\install.wim"
 $UpdDate            = (Get-Date).ToString("ddMMyyy")
+
 Function Copy-WithProgress{
     [CmdletBinding()]
     Param
@@ -196,13 +197,9 @@ if (!(Test-Path $PATHTOOSCDIMG\oscdimg.exe)){
 else{
     #Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
     $BOOTDATA = '2#p0,e,b"{0}"#pEF,e,b"{1}"' -f "$EXTRACT_DIR\boot\etfsboot.com","$EXTRACT_DIR\efi\Microsoft\boot\efisys_noprompt.bin"
-    $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR","$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[$UpdDate].ISO") -PassThru -Wait -NoNewWindow
+    $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR","$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO") -PassThru -Wait -NoNewWindow
     if($Proc.ExitCode -ne 0)
     {
         Throw "Failed to generate ISO with exitcode: $($Proc.ExitCode)"
     }
 }
-
-### Upload ISO to B2
-Connect-B2Cloud -AccountID "0024bd6b78b8d9e0000000007" -ApplicationKey "K0029MGiCqkALf6oNL1L7MHOLidQSpU" 
-Invoke-B2ItemUpload -BucketID "a46b3df68be7b8fb68ad091e" -Path "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[$UpdDate].ISO"
