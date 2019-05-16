@@ -2,20 +2,32 @@ Clear-Host
 Import-Module BitsTransfer
 
 ### Define variables
-$Manufacturer =                 (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
-$ScriptDir =                    (Split-Path -Parent $MyInvocation.MyCommand.Definition)
-$OSVersion =                    ((Get-CimInstance Win32_OperatingSystem).Caption).split(" ")[3]
-$VCppDownloadUri =              'https://aka.ms/vs/16/release/VC_redist.x64.exe'
-$VMwareToolsDownloadUri =       'https://packages.vmware.com/tools/esx/latest/windows/x64/index.html'
-$VMwareToolsVersion =           ((Invoke-WebRequest -Uri $VMWareToolsDownloadUri).links | Where-Object {$_.href -like 'VMware*'}).href
-$OMSADownloadUri =              'https://downloads.dell.com/FOLDER05170353M/1/OM-SrvAdmin-Dell-Web-WINX64-9.2.0-3142_A00.exe'
-$StarWindVSANDownloadUri =      'https://www.starwindsoftware.com/tmplink/starwind-v8.exe'
-$StarWindHealthDownloadUri =    'https://www.starwindsoftware.com/tmplink/starwindhealthservice.zip'
-$MellanoxWinOFDownloadUri =     'http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_52000_All_win' + "$OSVersion" + '_x64.exe'
-$MellanoxWinOF2DownloadUri =    'http://www.mellanox.com/downloads/WinOF/MLNX_WinOF2-2_20_50000_All_x64.exe'
-$StarWindHealthUser =           'Health'
-$StarWindHealthPassword =       'StarWind2015!'
+$Manufacturer                   = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
+$ScriptDir                      = (Split-Path -Parent $MyInvocation.MyCommand.Definition)
+$OSVersion                      = ((Get-CimInstance Win32_OperatingSystem).Caption).split(" ")[3]
+$VCppDownloadUri                = 'https://aka.ms/vs/16/release/VC_redist.x64.exe'
+$VMwareToolsDownloadUri         = 'https://packages.vmware.com/tools/esx/latest/windows/x64/index.html'
+$VMwareToolsVersion             = ((Invoke-WebRequest -Uri $VMWareToolsDownloadUri).links | Where-Object {$_.href -like 'VMware*'}).href
+$OMSADownloadUri                = 'https://downloads.dell.com/FOLDER05170353M/1/OM-SrvAdmin-Dell-Web-WINX64-9.2.0-3142_A00.exe'
+$StarWindVSANDownloadUri        = 'https://www.starwindsoftware.com/tmplink/starwind-v8.exe'
+$StarWindHealthDownloadUri      = 'https://www.starwindsoftware.com/tmplink/starwindhealthservice.zip'
+$MellanoxWinOFDownloadUri       = 'http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_52000_All_win' + "$OSVersion" + '_x64.exe'
+$MellanoxWinOF2DownloadUri      = 'http://www.mellanox.com/downloads/WinOF/MLNX_WinOF2-2_20_50000_All_x64.exe'
+$StarWindHealthUser             = 'Health'
+$StarWindHealthPassword         = 'StarWind2015!'
 
+
+try{
+    ### Installing NuGet package provider
+    Write-Host "Installing NuGet package provider" -NoNewline
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Confirm:$false -Force | Out-Null
+    Write-Host "`tOK" -ForegroundColor Green
+
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    $_
+}
 
 ### Allow to install modules from PSGallery to install powercli module
 
@@ -154,9 +166,9 @@ if ($Manufacturer -like "VMware*") {
             Write-Host "`tOK" -ForegroundColor Green
 
         ### Install powerCLI
-            Write-Host "Installing NuGet package provider" -NoNewline
-            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Confirm:$false -Force | Out-Null
-            Write-Host "`tOK" -ForegroundColor Green
+            # Write-Host "Installing NuGet package provider" -NoNewline
+            # Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Confirm:$false -Force | Out-Null
+            # Write-Host "`tOK" -ForegroundColor Green
 
             Write-Host "Installing powerCLI" -NoNewline
             Install-Module -Name VMware.PowerCLI -Scope AllUsers -Confirm:$false -Force | Out-Null
@@ -372,4 +384,28 @@ else{ ### Baremetal part of postinstall
         Write-Host "`tError`n" -ForegroundColor Red
         $_
     }
+}
+
+### Install StarWindVSAN
+
+try{
+    Write-Host "Install StarWindVSAN" -NoNewline
+    Start-Process -FilePath $Global:ScriptDir"\HCA\starwind.exe" -Wait
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    $_
+}
+
+### Install StarWind SLA
+
+try{
+    Write-Host "Install StarWindVSAN" -NoNewline
+    Start-Process -FilePath $Global:ScriptDir"\HCA\SLA_LicenseAgreement.exe" -Wait
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    $_
 }

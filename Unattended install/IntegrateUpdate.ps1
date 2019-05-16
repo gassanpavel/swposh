@@ -2,12 +2,17 @@ Clear-Host
 ### Install-Module -Name LatestUpdate
 ### https://www.powershellgallery.com/packages/LatestUpdate/
 
-Import-Module LatestUpdate
-Import-Module BitsTransfer
+### https://www.powershellgallery.com/packages/PS.B2/1.0.1
+### Install-Module -Name PS.B2
 
-$ISO                = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[26042019].ISO"
+Import-Module -Name PS.B2
+Import-Module -Name LatestUpdate
+Import-Module -Name BitsTransfer
+
+$ISO                = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[16052019].ISO"
 $PostInstallScript  = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
 $UnattendXML        = "D:\DEV\swposh\Unattended install\Autounattend.xml"
+$SLAPath            = "D:\DEV\swposh\Unattended install\SLA_LicenseAgreement.exe"
 $ISO_PARENT_DIR     = (split-path -Parent $ISO)
 $EXTRACT_DIR        = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR            = "$ISO_PARENT_DIR\BUILD\LCU"
@@ -15,7 +20,7 @@ $OUTPUT_DIR         =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
 $WIM_MOUNT_DIR      = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
 $TMP                = "$ISO_PARENT_DIR\BUILD\TMP"
 $WIM_PATH           = "$EXTRACT_DIR\sources\install.wim"
-
+$UpdDate            = (Get-Date).ToString("ddMMyyy")
 Function Copy-WithProgress{
     [CmdletBinding()]
     Param
@@ -142,7 +147,7 @@ $IMAGES = Get-WindowsImage -ImagePath $WIM_PATH
 $update = Get-ChildItem $LCU_DIR | Select-Object -Property Name
 foreach($image in $IMAGES){
     $imgIndex = $image.ImageIndex
-    Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -foregroundcolor Green
+    Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -Foregroundcolor Green
     try {
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Mount [$WIM_PATH] image ["$image.ImageName"] with index ["$image.ImageIndex"] to [$WIM_MOUNT_DIR]" -NoNewline
         Mount-WindowsImage -ImagePath $WIM_PATH -Index $imgIndex -Path $WIM_MOUNT_DIR -ScratchDirectory "$TMP\" -LogLevel 2 | Out-Null
@@ -154,9 +159,9 @@ foreach($image in $IMAGES){
     }
     foreach($upd in $update.Name){
         try {
-            Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$upd]" -nonewline
+            Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$upd]" -NoNewline
             Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$upd" -ScratchDirectory "$TMP\" -LogLevel 2
-            Write-Host "`t[OK]" -Foregroundcolor green
+            Write-Host "`t[OK]" -Foregroundcolor Green
         } catch {
             Write-Host "`t[Error]`n" -ForegroundColor Red
             $_
@@ -166,11 +171,15 @@ foreach($image in $IMAGES){
         Write-Host "Integrating POSTINSTALL script" -NoNewline
         New-Item -ItemType Directory -Path $WIM_MOUNT_DIR -Name "HCA" -Force | Out-Null
         Copy-WithProgress -Source $PostInstallScript -Destination "$WIM_MOUNT_DIR\HCA\"
-        Write-Host "`t[OK]" -Foregroundcolor green
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating SLA script" -NoNewline
+        Copy-WithProgress -Source $SLAPath -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline
         Dismount-WindowsImage -Path $WIM_MOUNT_DIR -Save -ScratchDirectory "$TMP" -CheckIntegrity  -LogLevel 2 | Out-Null
-        Write-Host "`t[OK]" -Foregroundcolor green
+        Write-Host "`t[OK]" -Foregroundcolor Green
     } catch {
         Write-Host "`t[Error]`n" -ForegroundColor Red
         $_
@@ -187,9 +196,13 @@ if (!(Test-Path $PATHTOOSCDIMG\oscdimg.exe)){
 else{
     #Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
     $BOOTDATA = '2#p0,e,b"{0}"#pEF,e,b"{1}"' -f "$EXTRACT_DIR\boot\etfsboot.com","$EXTRACT_DIR\efi\Microsoft\boot\efisys_noprompt.bin"
-    $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR","$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED.ISO") -PassThru -Wait -NoNewWindow
+    $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR","$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[$UpdDate].ISO") -PassThru -Wait -NoNewWindow
     if($Proc.ExitCode -ne 0)
     {
         Throw "Failed to generate ISO with exitcode: $($Proc.ExitCode)"
     }
 }
+
+### Upload ISO to B2
+Connect-B2Cloud -AccountID "0024bd6b78b8d9e0000000007" -ApplicationKey "K0029MGiCqkALf6oNL1L7MHOLidQSpU" 
+Invoke-B2ItemUpload -BucketID "a46b3df68be7b8fb68ad091e" -Path "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[$UpdDate].ISO"
