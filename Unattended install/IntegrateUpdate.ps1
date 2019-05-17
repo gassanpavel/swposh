@@ -211,5 +211,7 @@ else{
 
 $env:PYTHONIOENCODING = "UTF-8"
 $file = "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO"
-Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
-Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList "upload-file SW-Support $file 14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate" -Wait -NoNewWindow -LoadUserProfile
+Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
+    "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
+Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
+    "upload-file SW-Support $file 14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate" -Wait -NoNewWindow
