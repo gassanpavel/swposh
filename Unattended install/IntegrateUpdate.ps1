@@ -133,10 +133,12 @@ else{
 
 ### Download latest Cumulative update 
 informmsg "Check latest Cumulative update in [$LCU_DIR]"
-$UPDATE_PAKCAGE_NAME = ((Get-LatestUpdate -Build $OS_BUILD_VERSION | Where-Object{$_.Note -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
+$UPDATE_PAKCAGE_NAME = ((Get-LatestUpdate -Build $OS_BUILD_VERSION | Where-Object{$_.Note `
+    -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
 if(!(Test-Path $LCU_DIR/$UPDATE_PAKCAGE_NAME)){
     Write-Host "[$UPDATE_PAKCAGE_NAME] NOT exist and will be downloaded"
-    Start-BitsTransfer -Source (Get-LatestUpdate -Build $OS_BUILD_VERSION  | Where-Object{$_.Note -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL -Destination $LCU_DIR
+    Start-BitsTransfer -Source (Get-LatestUpdate -Build $OS_BUILD_VERSION  | Where-Object{$_.Note `
+        -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL -Destination $LCU_DIR
 }
 else{
     Write-Host "[$UPDATE_PAKCAGE_NAME] exist" -ForegroundColor Green
@@ -150,7 +152,8 @@ foreach($image in $IMAGES){
     $imgIndex = $image.ImageIndex
     Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -Foregroundcolor Green
     try {
-        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Mount [$WIM_PATH] image ["$image.ImageName"] with index ["$image.ImageIndex"] to [$WIM_MOUNT_DIR]" -NoNewline
+        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Mount [$WIM_PATH] `
+            image ["$image.ImageName"] with index ["$image.ImageIndex"] to [$WIM_MOUNT_DIR]" -NoNewline
         Mount-WindowsImage -ImagePath $WIM_PATH -Index $imgIndex -Path $WIM_MOUNT_DIR -ScratchDirectory "$TMP\" -LogLevel 2 | Out-Null
 
         Write-Host "`t[OK]" -Foregroundcolor green
@@ -197,9 +200,16 @@ if (!(Test-Path $PATHTOOSCDIMG\oscdimg.exe)){
 else{
     #Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
     $BOOTDATA = '2#p0,e,b"{0}"#pEF,e,b"{1}"' -f "$EXTRACT_DIR\boot\etfsboot.com","$EXTRACT_DIR\efi\Microsoft\boot\efisys_noprompt.bin"
-    $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR","$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO") -PassThru -Wait -NoNewWindow
+    $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR", `
+        "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO") -PassThru -Wait -NoNewWindow
     if($Proc.ExitCode -ne 0)
     {
         Throw "Failed to generate ISO with exitcode: $($Proc.ExitCode)"
     }
 }
+
+
+$env:PYTHONIOENCODING = "UTF-8"
+$file = "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO"
+Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
+Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList "upload-file SW-Support $file 14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate" -Wait -NoNewWindow -LoadUserProfile
