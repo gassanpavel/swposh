@@ -258,8 +258,7 @@ if ($Manufacturer -like "VMware*") {
          Write-Host "`tError`n" -ForegroundColor Red
          $_
     }
-    ### TODO:
-    ### Create scheduler task using https://docs.microsoft.com/en-us/windows/desktop/taskschd/schtasks
+    
     try{
         Write-Host "Creating scheduler task for Rescan_script.ps1" -NoNewline
         Start-Process -FilePath schtasks.exe -ArgumentList "/Create /RU administrator /RP StarWind2015 /TN ""Rescan ESXi"" /XML ""$Global:ScriptDir""\HCA\rescan_esx.xml"" " -Wait
