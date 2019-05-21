@@ -9,18 +9,21 @@ Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
 Import-Module -Name BitsTransfer
 
-$ISO                = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[16052019].ISO"
-$PostInstallScript  = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
-$UnattendXML        = "D:\DEV\swposh\Unattended install\Autounattend.xml"
-$SLAPath            = "D:\DEV\swposh\Unattended install\SLA_LicenseAgreement.exe"
-$ISO_PARENT_DIR     = (split-path -Parent $ISO)
-$EXTRACT_DIR        = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
-$LCU_DIR            = "$ISO_PARENT_DIR\BUILD\LCU"
-$OUTPUT_DIR         =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
-$WIM_MOUNT_DIR      = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
-$TMP                = "$ISO_PARENT_DIR\BUILD\TMP"
-$WIM_PATH           = "$EXTRACT_DIR\sources\install.wim"
-$UpdDate            = (Get-Date).ToString("ddMMyyy")
+$ISO                    = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[16052019].ISO"
+$PostInstallScript      = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
+$UnattendXML            = "D:\DEV\swposh\Unattended install\Autounattend.xml"
+$RescanXML              = "D:\DEV\swposh\Unattended install\rescan_esx.xml"
+$SLAPath                = "D:\DEV\swposh\Unattended install\SLA_LicenseAgreement.exe"
+$ISO_PARENT_DIR         = (split-path -Parent $ISO)
+$EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
+$LCU_DIR                = "$ISO_PARENT_DIR\BUILD\LCU"
+$OUTPUT_DIR             =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
+$WIM_MOUNT_DIR          = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
+$TMP                    = "$ISO_PARENT_DIR\BUILD\TMP"
+$WIM_PATH               = "$EXTRACT_DIR\sources\install.wim"
+$UpdDate                = (Get-Date).ToString("ddMMyyy")
+$env:PYTHONIOENCODING   = "UTF-8"
+$File                   = "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO"
 
 Function Copy-WithProgress{
     [CmdletBinding()]
@@ -181,6 +184,10 @@ foreach($image in $IMAGES){
         Copy-WithProgress -Source $SLAPath -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
+        Write-Host "Integrating rescan XML" -NoNewline
+        Copy-WithProgress -Source $RescanXML -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline
         Dismount-WindowsImage -Path $WIM_MOUNT_DIR -Save -ScratchDirectory "$TMP" -CheckIntegrity  -LogLevel 2 | Out-Null
         Write-Host "`t[OK]" -Foregroundcolor Green
@@ -209,9 +216,8 @@ else{
 }
 
 
-$env:PYTHONIOENCODING = "UTF-8"
-$file = "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO"
+
 Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
     "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
 Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
-    "upload-file SW-Support $file 14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate" -Wait -NoNewWindow
+    "upload-file SW-Support $file 14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO" -Wait -NoNewWindow
