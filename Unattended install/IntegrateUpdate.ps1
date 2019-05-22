@@ -9,7 +9,7 @@ Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
 Import-Module -Name BitsTransfer
 
-$ISO                    = "D:\Unattend\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED[16052019].ISO"
+$ISO                    = "D:\Unattend\BUILD\OUTPUT_ISO\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_22052019.ISO"
 $PostInstallScript      = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
 $UnattendXML            = "D:\DEV\swposh\Unattended install\Autounattend.xml"
 $RescanXML              = "D:\DEV\swposh\Unattended install\rescan_esx.xml"
