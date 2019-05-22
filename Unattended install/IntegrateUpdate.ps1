@@ -54,20 +54,8 @@ Function Copy-WithProgress{
     }
 }
 
-function informmsg{
-    [CmdletBinding()]
-    Param
-    (
-        [Parameter(Mandatory=$true,
-            ValueFromPipelineByPropertyName=$true,
-            Position=0)]
-        $msg
-    )
-    Write-Host "###`n$msg" -ForegroundColor DarkMagenta
-}
-
 ### mount iso
-informmsg "Mounting [$ISO]"
+Write-Host "Mounting [$ISO]"
 if ((Get-DiskImage -ImagePath $ISO).Attached -like 'False'){
     Mount-DiskImage -ImagePath $ISO
     $MOUNTED_ISO_DRIVE_LETTER = (Get-DiskImage -ImagePath $ISO | Get-Volume).DriveLetter +":\"
@@ -81,7 +69,7 @@ else{
 }
 
 ### create folder structure
-informmsg "Create folders structure"
+Write-Host "Create folders structure"
 $FOLDERS=@("$EXTRACT_DIR", "$LCU_DIR", "$OUTPUT_DIR", "$WIM_MOUNT_DIR", "$TMP")
 
 foreach ($FOLDER in $FOLDERS){
@@ -95,9 +83,9 @@ foreach ($FOLDER in $FOLDERS){
 }
 
 if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
-    informmsg "Copy files and folders from mounted ISO to [$EXTRACT_DIR] folder"
+    Write-Host "Copy files and folders from mounted ISO to [$EXTRACT_DIR] folder"
     Copy-WithProgress -Source $MOUNTED_ISO_DRIVE_LETTER -Destination  "$EXTRACT_DIR\"
-    informmsg "Get OS build version from WIM"
+    Write-Host "Get OS build version from WIM"
     While ($true){
         if (!(Test-Path -Path $WIM_PATH)){
             Start-Sleep -Seconds 1
@@ -135,7 +123,7 @@ else{
 }
 
 ### Download latest Cumulative update 
-informmsg "Check latest Cumulative update in [$LCU_DIR]"
+Write-Host "Check latest Cumulative update in [$LCU_DIR]"
 $UPDATE_PAKCAGE_NAME = ((Get-LatestUpdate -Build $OS_BUILD_VERSION | Where-Object{$_.Note `
     -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
 if(!(Test-Path $LCU_DIR/$UPDATE_PAKCAGE_NAME)){
@@ -148,7 +136,7 @@ else{
 }
 
 ### Download latest Servicing Stack update 
-informmsg "Check latest Servicing Stack update in [$LCU_DIR]"
+Write-Host "Check latest Servicing Stack update in [$LCU_DIR]"
 $SS_UPDATE_PAKCAGE_NAME = ((Get-LatestServicingStack -Version 1607 | Where-Object{$_.Note `
     -like "*Servicing Stack Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
 if(!(Test-Path $LCU_DIR/$SS_UPDATE_PAKCAGE_NAME)){
@@ -161,7 +149,7 @@ else{
 }
 
 ### Intergate updates in WIM file
-informmsg "`nIntegrating updates in [$WIM_PATH]"
+Write-Host "`nIntegrating updates in [$WIM_PATH]"
 $IMAGES = Get-WindowsImage -ImagePath $WIM_PATH
 $Updates = Get-ChildItem $LCU_DIR | Sort-Object -Property Length
 foreach($image in $IMAGES){
@@ -211,7 +199,7 @@ foreach($image in $IMAGES){
 }
 
 ### "Creating .iso file in ""$OUTPUT_DIR\"""
-informmsg "Creating .iso file in [$OUTPUT_DIR\]"
+Write-Host "Creating .iso file in [$OUTPUT_DIR\]"
 $PATHTOOSCDIMG = "${env:ProgramFiles(x86)}\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg"
 if (!(Test-Path $PATHTOOSCDIMG\oscdimg.exe)){
     Write-Host "Oupps, cannot find Oscdimg.exe. Aborting" -ForegroundColor Red
