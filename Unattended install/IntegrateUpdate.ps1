@@ -2,8 +2,8 @@ Clear-Host
 ### Install-Module -Name LatestUpdate
 ### https://www.powershellgallery.com/packages/LatestUpdate/
 
-### https://www.powershellgallery.com/packages/PS.B2/1.0.1
 ### Install-Module -Name PS.B2
+### https://www.powershellgallery.com/packages/PS.B2/1.0.1
 
 Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
@@ -147,10 +147,23 @@ else{
     Write-Host "[$UPDATE_PAKCAGE_NAME] exist" -ForegroundColor Green
 }
 
+### Download latest Servicing Stack update 
+informmsg "Check latest Servicing Stack update in [$LCU_DIR]"
+$SS_UPDATE_PAKCAGE_NAME = ((Get-LatestServicingStack -Version 1607 | Where-Object{$_.Note `
+    -like "*Servicing Stack Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
+if(!(Test-Path $LCU_DIR/$SS_UPDATE_PAKCAGE_NAME)){
+    Write-Host "[$SS_UPDATE_PAKCAGE_NAME] NOT exist and will be downloaded"
+    Start-BitsTransfer -Source (Get-LatestServicingStack -Version 1607 | Where-Object{$_.Note `
+        -like "*Servicing Stack Update for Windows Server 2016 for x64-based Systems*"}).URL -Destination $LCU_DIR
+}
+else{
+    Write-Host "[$UPDATE_PAKCAGE_NAME] exist" -ForegroundColor Green
+}
+
 ### Intergate updates in WIM file
 informmsg "`nIntegrating updates in [$WIM_PATH]"
 $IMAGES = Get-WindowsImage -ImagePath $WIM_PATH
-$update = Get-ChildItem $LCU_DIR | Select-Object -Property Name
+$Updates = Get-ChildItem $LCU_DIR | Sort-Object -Property Length
 foreach($image in $IMAGES){
     $imgIndex = $image.ImageIndex
     Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -Foregroundcolor Green
@@ -164,10 +177,10 @@ foreach($image in $IMAGES){
         Write-Host "`t[Error]`n" -ForegroundColor Red
         $_
     }
-    foreach($upd in $update.Name){
+    foreach($Update in $Updates.Name){
         try {
-            Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$upd]" -NoNewline
-            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$upd" -ScratchDirectory "$TMP\" -LogLevel 2
+            Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$Update]" -NoNewline
+            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\"$Update"" -ScratchDirectory "$TMP\" -LogLevel 2
             Write-Host "`t[OK]" -Foregroundcolor Green
         } catch {
             Write-Host "`t[Error]`n" -ForegroundColor Red
@@ -214,8 +227,6 @@ else{
         Throw "Failed to generate ISO with exitcode: $($Proc.ExitCode)"
     }
 }
-
-
 
 Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
     "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
