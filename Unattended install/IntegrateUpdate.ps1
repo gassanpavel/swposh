@@ -180,7 +180,7 @@ foreach($image in $IMAGES){
     foreach($Update in $Updates.Name){
         try {
             Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$Update]" -NoNewline
-            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\"$Update"" -ScratchDirectory "$TMP\" -LogLevel 2
+            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$Update" -ScratchDirectory "$TMP\" -LogLevel 2
             Write-Host "`t[OK]" -Foregroundcolor Green
         } catch {
             Write-Host "`t[Error]`n" -ForegroundColor Red
