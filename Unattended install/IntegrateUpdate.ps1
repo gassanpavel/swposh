@@ -228,6 +228,7 @@ else{
     }
 }
 
+Write-Host "Upload to B2" -ForegroundColor Green
 Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
     "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
 Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
