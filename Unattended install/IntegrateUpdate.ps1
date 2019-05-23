@@ -9,21 +9,22 @@ Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
 Import-Module -Name BitsTransfer
 
-$ISO                    = "D:\Unattend\BUILD\OUTPUT_ISO\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_22052019.ISO"
+$Iso                    = "E:\ISO\en_windows_server_2019_x64.iso"
+$IsoFileName            = $ISO.split('\')[-1]
+$OutputIsoFile          = $OUTPUT_DIR + "\" + $ISO.split('\')[-1]
+$ISO_PARENT_DIR         = (split-path -Parent $ISO)
 $PostInstallScript      = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
-$UnattendXML            = "D:\DEV\swposh\Unattended install\Autounattend.xml"
+#$UnattendXML            = "D:\DEV\swposh\Unattended install\Autounattend.xml"
 $RescanXML              = "D:\DEV\swposh\Unattended install\rescan_esx.xml"
 $SLAPath                = "D:\DEV\swposh\Unattended install\SLA_LicenseAgreement.exe"
-$ISO_PARENT_DIR         = (split-path -Parent $ISO)
 $EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR                = "$ISO_PARENT_DIR\BUILD\LCU"
-$OUTPUT_DIR             =  "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
+$OUTPUT_DIR             = "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
 $WIM_MOUNT_DIR          = "$ISO_PARENT_DIR\BUILD\WIM_MOUNT"
 $TMP                    = "$ISO_PARENT_DIR\BUILD\TMP"
 $WIM_PATH               = "$EXTRACT_DIR\sources\install.wim"
-$UpdDate                = (Get-Date).ToString("ddMMyyy")
+#$UpdDate                = (Get-Date).ToString("ddMMyyy")
 $env:PYTHONIOENCODING   = "UTF-8"
-$File                   = "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO"
 
 Function Copy-WithProgress{
     [CmdletBinding()]
@@ -59,11 +60,11 @@ Write-Host "Mounting [$ISO]"
 if ((Get-DiskImage -ImagePath $ISO).Attached -like 'False'){
     Mount-DiskImage -ImagePath $ISO
     $MOUNTED_ISO_DRIVE_LETTER = (Get-DiskImage -ImagePath $ISO | Get-Volume).DriveLetter +":\"
-    Write-Host "### [$ISO] file already mounted, drive letter is: " -NoNewline
+    Write-Host "### [$ISO] file already mounted, drive letter is:" -NoNewline
     Write-Host "`t[$MOUNTED_ISO_DRIVE_LETTER]" -ForegroundColor Green
 } 
 else{
-    Write-Host "###[$ISO] file already mounted, drive letter is: " -NoNewline
+    Write-Host "###[$ISO] file already mounted, drive letter is:" -NoNewline
     $MOUNTED_ISO_DRIVE_LETTER = (Get-DiskImage -ImagePath $ISO | Get-Volume).DriveLetter +":\"
     Write-Host "`t[$MOUNTED_ISO_DRIVE_LETTER]" -ForegroundColor Green
 }
@@ -73,13 +74,23 @@ Write-Host "Create folders structure"
 $FOLDERS=@("$EXTRACT_DIR", "$LCU_DIR", "$OUTPUT_DIR", "$WIM_MOUNT_DIR", "$TMP")
 
 foreach ($FOLDER in $FOLDERS){
-    if (!(Test-Path $FOLDER)){
+    if (!(Test-Path -Path $FOLDER)){
         New-Item $FOLDER -ItemType Directory | Out-Null
         Write-Host "Folder [$FOLDER] create" -ForegroundColor Yellow
     }
     else{
         Write-Host "Folder [$FOLDER] exist" -ForegroundColor Green
     }
+}
+
+### Clear $EXTRACT_DIR
+try {
+    Write-Host "Clear [$EXTRACT_DIR]" -NoNewline
+    Get-ChildItem -Path $EXTRACT_DIR | Remove-Item -Recurse -Force
+    Write-Host "`t[OK]" -Foregroundcolor green
+} catch {
+    Write-Host "`t[Error]`n" -ForegroundColor Red
+    $_
 }
 
 if ((Get-ChildItem $EXTRACT_DIR).Length -eq "0"){
@@ -122,14 +133,26 @@ else{
     }
 }
 
+### Clear LCU folder
+try {
+    Write-Host "Clear [$LCU_DIR]" -NoNewline
+    Get-ChildItem -Path $LCU_DIR | Remove-Item -Recurse -Force
+    Write-Host "`t[OK]" -Foregroundcolor green
+} catch {
+    Write-Host "`t[Error]`n" -ForegroundColor Red
+    $_
+}
+
 ### Download latest Cumulative update 
 Write-Host "Check latest Cumulative update in [$LCU_DIR]"
 $UPDATE_PAKCAGE_NAME = ((Get-LatestUpdate -Build $OS_BUILD_VERSION | Where-Object{$_.Note `
-    -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
+    -like "*Cumulative Update for Windows Server * for x64-based Systems*"}).URL).split("/")[-1]
+$ServicingStackVersion = ((Get-LatestUpdate -Build $OS_BUILD_VERSION | Where-Object{$_.Note `
+    -like "*Cumulative Update for Windows Server * for x64-based Systems*"}).version)
 if(!(Test-Path $LCU_DIR/$UPDATE_PAKCAGE_NAME)){
     Write-Host "[$UPDATE_PAKCAGE_NAME] NOT exist and will be downloaded"
     Start-BitsTransfer -Source (Get-LatestUpdate -Build $OS_BUILD_VERSION  | Where-Object{$_.Note `
-        -like "*Cumulative Update for Windows Server 2016 for x64-based Systems*"}).URL -Destination $LCU_DIR
+        -like "*Cumulative Update for Windows Server * for x64-based Systems*"}).URL -Destination $LCU_DIR
 }
 else{
     Write-Host "[$UPDATE_PAKCAGE_NAME] exist" -ForegroundColor Green
@@ -137,12 +160,12 @@ else{
 
 ### Download latest Servicing Stack update 
 Write-Host "Check latest Servicing Stack update in [$LCU_DIR]"
-$SS_UPDATE_PAKCAGE_NAME = ((Get-LatestServicingStack -Version 1607 | Where-Object{$_.Note `
-    -like "*Servicing Stack Update for Windows Server 2016 for x64-based Systems*"}).URL).split("/")[-1]
+$SS_UPDATE_PAKCAGE_NAME = ((Get-LatestServicingStack -Version $ServicingStackVersion | Where-Object{$_.Note `
+    -like "*Servicing Stack Update for Windows Server * for x64-based Systems*"}).URL).split("/")[-1]
 if(!(Test-Path $LCU_DIR/$SS_UPDATE_PAKCAGE_NAME)){
     Write-Host "[$SS_UPDATE_PAKCAGE_NAME] NOT exist and will be downloaded"
-    Start-BitsTransfer -Source (Get-LatestServicingStack -Version 1607 | Where-Object{$_.Note `
-        -like "*Servicing Stack Update for Windows Server 2016 for x64-based Systems*"}).URL -Destination $LCU_DIR
+    Start-BitsTransfer -Source (Get-LatestServicingStack -Version $ServicingStackVersion | Where-Object{$_.Note `
+        -like "*Servicing Stack Update for Windows Server * for x64-based Systems*"}).URL -Destination $LCU_DIR
 }
 else{
     Write-Host "[$UPDATE_PAKCAGE_NAME] exist" -ForegroundColor Green
@@ -156,8 +179,7 @@ foreach($image in $IMAGES){
     $imgIndex = $image.ImageIndex
     Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integration of updates into image ["$image.ImageName"] is starting" -Foregroundcolor Green
     try {
-        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Mount [$WIM_PATH] `
-            image ["$image.ImageName"] with index ["$image.ImageIndex"] to [$WIM_MOUNT_DIR]" -NoNewline
+        Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Mount [$WIM_PATH] image ["$image.ImageName"] with index ["$image.ImageIndex"] to [$WIM_MOUNT_DIR]" -NoNewline
         Mount-WindowsImage -ImagePath $WIM_PATH -Index $imgIndex -Path $WIM_MOUNT_DIR -ScratchDirectory "$TMP\" -LogLevel 2 | Out-Null
 
         Write-Host "`t[OK]" -Foregroundcolor green
@@ -168,7 +190,7 @@ foreach($image in $IMAGES){
     foreach($Update in $Updates.Name){
         try {
             Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Integrating [$Update]" -NoNewline
-            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$Update" -ScratchDirectory "$TMP\" -LogLevel 2
+            Add-WindowsPackage -Path $WIM_MOUNT_DIR -PackagePath "$LCU_DIR\$Update" -ScratchDirectory "$TMP\" -LogLevel 2 | Out-Null
             Write-Host "`t[OK]" -Foregroundcolor Green
         } catch {
             Write-Host "`t[Error]`n" -ForegroundColor Red
@@ -209,7 +231,7 @@ else{
     #Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
     $BOOTDATA = '2#p0,e,b"{0}"#pEF,e,b"{1}"' -f "$EXTRACT_DIR\boot\etfsboot.com","$EXTRACT_DIR\efi\Microsoft\boot\efisys_noprompt.bin"
     $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR", `
-        "$OUTPUT_DIR\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO") -PassThru -Wait -NoNewWindow
+        "$OutputIsoFile") -PassThru -Wait -NoNewWindow
     if($Proc.ExitCode -ne 0)
     {
         Throw "Failed to generate ISO with exitcode: $($Proc.ExitCode)"
@@ -220,4 +242,4 @@ Write-Host "Upload to B2" -ForegroundColor Green
 Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
     "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
 Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
-    "upload-file SW-Support $file 14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_$UpdDate.ISO" -Wait -NoNewWindow
+    "upload-file SW-Support $OutputIsoFile $IsoFileName" -Wait -NoNewWindow
