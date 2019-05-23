@@ -47,11 +47,11 @@ Function Copy-WithProgress{
 
     foreach ($File in $Filelist)
     {
+        $Position++
         $Filename=$File.Fullname.tolower().replace($Source,'')
         $DestinationFile=($Destination+$Filename)
         Write-Progress -Activity "Copying data from '$source' to '$Destination'" -Status "Copying File $Filename" -PercentComplete (($Position/$total)*100)
-        Copy-Item $File.FullName -Destination $DestinationFile -Force
-        $Position++
+        Copy-Item $File.FullName -Destination $DestinationFile -Force  
     }
 }
 
