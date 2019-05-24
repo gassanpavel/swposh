@@ -165,11 +165,6 @@ if ($Manufacturer -like "VMware*") {
             Start-Process -FilePath $Global:ScriptDir"\HCA\$VMwareToolsVersion" -ArgumentList '/S /v "/qn REBOOT=R ADDLOCAL=ALL"' -Wait
             Write-Host "`tOK" -ForegroundColor Green
 
-        ### Install powerCLI
-            # Write-Host "Installing NuGet package provider" -NoNewline
-            # Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Confirm:$false -Force | Out-Null
-            # Write-Host "`tOK" -ForegroundColor Green
-
             Write-Host "Installing powerCLI" -NoNewline
             Install-Module -Name VMware.PowerCLI -Scope AllUsers -Confirm:$false -Force | Out-Null
             Write-Host "`tOK" -ForegroundColor Green
