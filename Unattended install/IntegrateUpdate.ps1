@@ -9,12 +9,11 @@ Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
 Import-Module -Name BitsTransfer
 
-$Iso                    = "E:\ISO\en_windows_server_2019_x64.iso"
+$Iso                    = "E:\ISO\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_22052019.ISO"
 $IsoFileName            = $ISO.split('\')[-1]
-$OutputIsoFile          = $OUTPUT_DIR + "\" + $ISO.split('\')[-1]
 $ISO_PARENT_DIR         = (split-path -Parent $ISO)
 $PostInstallScript      = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
-#$UnattendXML            = "D:\DEV\swposh\Unattended install\Autounattend.xml"
+$UnattendXML            = "D:\DEV\swposh\Unattended install\Autounattend.xml"
 $RescanXML              = "D:\DEV\swposh\Unattended install\rescan_esx.xml"
 $SLAPath                = "D:\DEV\swposh\Unattended install\SLA_LicenseAgreement.exe"
 $EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
@@ -25,6 +24,7 @@ $TMP                    = "$ISO_PARENT_DIR\BUILD\TMP"
 $WIM_PATH               = "$EXTRACT_DIR\sources\install.wim"
 #$UpdDate                = (Get-Date).ToString("ddMMyyy")
 $env:PYTHONIOENCODING   = "UTF-8"
+$OutputIsoFile          = $OUTPUT_DIR + "\" + $ISO.split('\')[-1]
 
 Function Copy-WithProgress{
     [CmdletBinding()]
@@ -228,7 +228,7 @@ if (!(Test-Path $PATHTOOSCDIMG\oscdimg.exe)){
     Break
 }
 else{
-    #Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
+    Copy-Item -Path $UnattendXML -Destination "$EXTRACT_DIR\" -Force
     $BOOTDATA = '2#p0,e,b"{0}"#pEF,e,b"{1}"' -f "$EXTRACT_DIR\boot\etfsboot.com","$EXTRACT_DIR\efi\Microsoft\boot\efisys_noprompt.bin"
     $Proc = Start-Process -FilePath "$PATHTOOSCDIMG\oscdimg.exe" -ArgumentList @("-bootdata:$BootData",'-u2','-udfver102',"$EXTRACT_DIR", `
         "$OutputIsoFile") -PassThru -Wait -NoNewWindow

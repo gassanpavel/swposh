@@ -7,7 +7,7 @@ $ScriptDir                      = (Split-Path -Parent $MyInvocation.MyCommand.De
 $OSVersion                      = ((Get-CimInstance Win32_OperatingSystem).Caption).split(" ")[3]
 $VCppDownloadUri                = 'https://aka.ms/vs/16/release/VC_redist.x64.exe'
 $VMwareToolsDownloadUri         = 'https://packages.vmware.com/tools/esx/latest/windows/x64/index.html'
-$VMwareToolsVersion             = ((Invoke-WebRequest -Uri $VMWareToolsDownloadUri).links | Where-Object {$_.href -like 'VMware*'}).href
+$VMwareToolsVersion             = ((Invoke-WebRequest -Uri $VMWareToolsDownloadUri -UseBasicParsing).links | Where-Object {$_.href -like 'VMware*'}).href
 $OMSADownloadUri                = 'https://downloads.dell.com/FOLDER05170353M/1/OM-SrvAdmin-Dell-Web-WINX64-9.2.0-3142_A00.exe'
 $StarWindVSANDownloadUri        = 'https://www.starwindsoftware.com/tmplink/starwind-v8.exe'
 $StarWindHealthDownloadUri      = 'https://www.starwindsoftware.com/tmplink/starwindhealthservice.zip'
@@ -177,25 +177,35 @@ if ($Manufacturer -like "VMware*") {
     
     ### Create HEALTH USER on ESXi host
 
-    try{
-        [ipaddress]$ESXiIp = read-host "Type IP address of the local ESXi server"
-    }
-    catch{
-        write-host "IP address entered is not valid. Try again"
-    }
-
-    try{
+    function ESXiConnect{
+        while ($true){
+            try{
+                [ipaddress]$ESXiIp = read-host "Type IP address of the local ESXi server"
+                break
+            }
+            catch{
+                Write-Host "IP address is not valid. Try again"
+            }
+        }
         $SecureStringESXiPassword = Read-Host -AsSecureString "Please enter your password"
-        $ESXiPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureStringESXiPassword))
-    }
-    catch{
-        Write-Host "`tError`n" -ForegroundColor Red
-        $_
+        $ESXiPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureStringESXiPassword)) 
+        Write-Host "Connecting to ESXi host" -NoNewline
+        Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
+        Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
+        if (!(Connect-VIServer -Server $ESXiIp -User root -Password $ESXiPassword -ErrorAction SilentlyContinue)){
+            Write-Host "`nCant connect to ESXi server. Check your IP or credentials and try again`n" -ForegroundColor Red
+            ESXiConnect
+            break
+        }
+        else{
+            Write-Host "`tOK" -ForegroundColor Green
+            break
+        }
     }
 
     try{
         ### Connect to ESXi host
-
+        ESXiConnect
         Write-Host "Connecting to ESXi host" -NoNewline
         Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
         Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
