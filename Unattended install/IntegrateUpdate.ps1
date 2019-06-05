@@ -1,21 +1,21 @@
 Clear-Host
-### Install-Module -Name LatestUpdate
+Install-Module -Name LatestUpdate
 ### https://www.powershellgallery.com/packages/LatestUpdate/
 
-### Install-Module -Name PS.B2
+Install-Module -Name PS.B2
 ### https://www.powershellgallery.com/packages/PS.B2/1.0.1
 
 Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
 Import-Module -Name BitsTransfer
 
-$Iso                    = "E:\ISO\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_22052019.ISO"
+$Iso                    = "E:\ISO\en_windows_server_2019_x64.iso"
 $IsoFileName            = $ISO.split('\')[-1]
 $ISO_PARENT_DIR         = (split-path -Parent $ISO)
-$PostInstallScript      = "D:\DEV\swposh\Unattended install\PostInstall.ps1"
-$UnattendXML            = "D:\DEV\swposh\Unattended install\Autounattend.xml"
-$RescanXML              = "D:\DEV\swposh\Unattended install\rescan_esx.xml"
-$SLAPath                = "D:\DEV\swposh\Unattended install\SLA_LicenseAgreement.exe"
+$PostInstallScript      = "$PSScriptRoot\PostInstall.ps1"
+$UnattendXML            = "$PSScriptRoot\Autounattend.xml"
+$RescanXML              = "$PSScriptRoot\rescan_esx.xml"
+$SLAPath                = "$PSScriptRoot\SLA_LicenseAgreement.exe"
 $EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR                = "$ISO_PARENT_DIR\BUILD\LCU"
 $OUTPUT_DIR             = "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
