@@ -158,7 +158,7 @@ catch{
 ### Install StarWind SLA
 
 try{
-    Copy-Item -Path $Global:ScriptDir"\HCA\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
+    move-Item -Path $Global:ScriptDir"\HCA\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
     Write-Host "Install SLA LicenseAgreement" -NoNewline
     Start-Process -FilePath "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
@@ -169,7 +169,7 @@ catch{
 }
 
 Write-Host "Set Autostart ConfigurationScript.ps1"
-New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $Global:ScriptDir"\HCA\ConfigurationScript.ps1"" | Out-Null
+New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $Global:ScriptDir'\HCA\ConfigurationScript.ps1'" | Out-Null
 
 ### Check manufacturer info - Baremetal or ESXi
 
