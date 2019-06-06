@@ -16,6 +16,41 @@ $MellanoxWinOF2DownloadUri      = 'http://www.mellanox.com/downloads/WinOF/MLNX_
 $StarWindHealthUser             = 'Health'
 $StarWindHealthPassword         = 'StarWind2015!'
 
+### Disable Firewall 
+
+try{
+    Write-Host "Disabling firewall" -NoNewline
+    Set-NetFirewallProfile -All -Enabled False
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    $_
+}
+
+### Enable RPD connections
+
+try{
+    Write-Host "Enable RDP connections" -NoNewline
+    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" 0
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    $_
+}
+
+### Enable WinRM
+try{
+    Write-Host "Enable WinRM connections" -NoNewline
+    Enable-PSRemoting -SkipNetworkProfileCheck -Force | Out-Null
+    Get-Service -Name WinRM | Start-Service -Confirm:$false
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    $_
+}
 
 try{
     ### Installing NuGet package provider
@@ -108,11 +143,11 @@ if (!(Test-Path -Path $Global:ScriptDir"\HCA\starwind.exe")){
     }
 }
 
-### Disable Firewall 
+### Install StarWindVSAN
 
 try{
-    Write-Host "Disabling firewall" -NoNewline
-    Set-NetFirewallProfile -All -Enabled False
+    Write-Host "Install StarWindVSAN" -NoNewline
+    Start-Process -FilePath $Global:ScriptDir"\HCA\starwind.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
@@ -120,23 +155,12 @@ catch{
     $_
 }
 
-### Enable RPD connections
+### Install StarWind SLA
 
 try{
-    Write-Host "Enable RDP connections" -NoNewline
-    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" 0
-    Write-Host "`tOK" -ForegroundColor Green
-}
-catch{
-    Write-Host "`tError`n" -ForegroundColor Red
-    $_
-}
-
-### Enable WinRM
-try{
-    Write-Host "Enable WinRM connections" -NoNewline
-    Enable-PSRemoting -SkipNetworkProfileCheck -Force | Out-Null
-    Get-Service -Name WinRM | Start-Service -Confirm:$false
+    Copy-Item -Path $Global:ScriptDir"\HCA\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
+    Write-Host "Install SLA LicenseAgreement" -NoNewline
+    Start-Process -FilePath "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
@@ -351,31 +375,7 @@ else{ ### Baremetal part of postinstall
 
     ### Install Roles and Features
     
-    try{
-        ### Install MPIO Role
-
-        Write-Host "Enable autostart iscsi service" -NoNewline 
-        Get-Service -Name MSiSCSI | Start-Service | Set-Service -Name MSiSCSI -StartupType Automatic
-        Write-Host "`tOK" -ForegroundColor Green
-
-        ### Install MPIO Role
-
-        Write-Host "Install MPIO Role" -NoNewline 
-        Install-WindowsFeature -name Multipath-IO
-        Write-Host "`tOK" -ForegroundColor Green
-
-        ### Enable iSCSI support for MPIO
-
-        Write-Host "Enable iSCSI support for MPIO" -NoNewline 
-        New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
-        Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`tError`n" -ForegroundColor Red
-        $_
-    }
-
-    try{
+        try{
         ### Install Hyper-V Role
 
         Write-Host "Install Hyper-V Role" -NoNewline 
@@ -398,28 +398,22 @@ else{ ### Baremetal part of postinstall
         Write-Host "`tError`n" -ForegroundColor Red
         $_
     }
-}
 
-### Install StarWindVSAN
+    try{
+        ### Enable MSiSCSI service
 
-try{
-    Write-Host "Install StarWindVSAN" -NoNewline
-    Start-Process -FilePath $Global:ScriptDir"\HCA\starwind.exe" -Wait
-    Write-Host "`tOK" -ForegroundColor Green
-}
-catch{
-    Write-Host "`tError`n" -ForegroundColor Red
-    $_
-}
+        Write-Host "Enable autostart iscsi service" -NoNewline 
+        Get-Service -Name MSiSCSI | Start-Service | Set-Service -Name MSiSCSI -StartupType Automatic
+        Write-Host "`tOK" -ForegroundColor Green
 
-### Install StarWind SLA
+        ### Install MPIO Role
 
-try{
-    Write-Host "Install SLA LicenseAgreement" -NoNewline
-    Start-Process -FilePath $Global:ScriptDir"\HCA\SLA_LicenseAgreement.exe" -Wait
-    Write-Host "`tOK" -ForegroundColor Green
-}
-catch{
-    Write-Host "`tError`n" -ForegroundColor Red
-    $_
+        Write-Host "Install MPIO Role" -NoNewline 
+        Install-WindowsFeature -name Multipath-IO -Restart
+        Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
+    }
 }
