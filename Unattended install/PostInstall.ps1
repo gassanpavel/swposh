@@ -168,6 +168,9 @@ catch{
     $_
 }
 
+Write-Host "Set Autostart ConfigurationScript.ps1"
+New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $Global:ScriptDir"\HCA\ConfigurationScript.ps1"" | Out-Null
+
 ### Check manufacturer info - Baremetal or ESXi
 
 if ($Manufacturer -like "VMware*") {
@@ -301,9 +304,6 @@ if ($Manufacturer -like "VMware*") {
 
 else{ ### Baremetal part of postinstall
     Write-Host "###This is BAREMETAL HOST!###" -ForegroundColor Green
-
-    Write-Host "Set Autostart ConfigurationScript.ps1"
-	New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $Global:ScriptDir"\HCA\ConfigurationScript.ps1"" | Out-Null
 
     ### Download Dell OMSA
     if(!(Test-Path -Path $Global:ScriptDir"\HCA\OMSA.zip")){    
