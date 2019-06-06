@@ -81,13 +81,13 @@ if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
     try{
         ### Download C++ Redistribution
         Write-Host "Downloading Visual C++ Redistribution" -NoNewline
-        Start-BitsTransfer -Source $VCppDownloadUri -Destination $Global:ScriptDir"\HCA\VC_redist.x64.exe" `
+        Start-BitsTransfer -Source $VCppDownloadUri -Destination $PSScriptRoot"\HCA\VC_redist.x64.exe" `
             -Description "Downloading Visual C++ Redistribution"
         Write-Host "`tOK" -ForegroundColor Green
         
         ### Install C++ Redistribution
         Write-Host "Installing Visual C++ Redistribution" -NoNewline
-        Start-Process -FilePath $Global:ScriptDir"\HCA\VC_redist.x64.exe" -ArgumentList "/install /q /norestart" -Wait
+        Start-Process -FilePath $PSScriptRoot"\HCA\VC_redist.x64.exe" -ArgumentList "/install /q /norestart" -Wait
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
@@ -97,19 +97,19 @@ if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
 }
 
 ### Download latest StarWindHealthService
-if (!(Test-Path -Path $Global:ScriptDir"\HCA\starwindhealthservice.zip")){
+if (!(Test-Path -Path $PSScriptRoot"\HCA\starwindhealthservice.zip")){
     try{
         Write-Host "Downloading latest StarWindHealthService" -NoNewline
-        Start-BitsTransfer -Source $StarWindHealthDownloadUri -Destination $Global:ScriptDir"\HCA\starwindhealthservice.zip" `
+        Start-BitsTransfer -Source $StarWindHealthDownloadUri -Destination $PSScriptRoot"\HCA\starwindhealthservice.zip" `
             -Description "Downloading latest StarWindHealthService"
         Write-Host "`tOK" -ForegroundColor Green
 
     ### Extracting StarWindHealthService
 
         Write-Host "Extract StarWindHealthService" -NoNewline
-        Expand-Archive -Path $Global:ScriptDir"\HCA\starwindhealthservice.zip" -DestinationPath $Global:ScriptDir"\HCA\" -Force
-        Expand-Archive -Path $Global:ScriptDir"\HCA\starwindhealthservice\starwindhealthservice.zip" `
-            -DestinationPath $Global:ScriptDir"\HCA\starwindhealthservice" -Force
+        Expand-Archive -Path $PSScriptRoot"\HCA\starwindhealthservice.zip" -DestinationPath $PSScriptRoot"\HCA\" -Force
+        Expand-Archive -Path $PSScriptRoot"\HCA\starwindhealthservice\starwindhealthservice.zip" `
+            -DestinationPath $PSScriptRoot"\HCA\starwindhealthservice" -Force
         ### Yes, I know, this is stupid,
         ### to place the archive into the archive, 
         ### but our web development department, 
@@ -120,7 +120,7 @@ if (!(Test-Path -Path $Global:ScriptDir"\HCA\starwindhealthservice.zip")){
     ### Installing StarWindHealthService
 
         Write-Host "Installing StarWindHealthService" -NoNewline
-        Start-Process -FilePath $Global:ScriptDir"\HCA\starwindhealthservice\starwindhealthservice.exe" `
+        Start-Process -FilePath $PSScriptRoot"\HCA\starwindhealthservice\starwindhealthservice.exe" `
             -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS' -Wait
         Write-Host "`tOK" -ForegroundColor Green
     }
@@ -130,10 +130,10 @@ if (!(Test-Path -Path $Global:ScriptDir"\HCA\starwindhealthservice.zip")){
     }
 }
 ### Download latest StarWindVSAN build
-if (!(Test-Path -Path $Global:ScriptDir"\HCA\starwind.exe")){
+if (!(Test-Path -Path $PSScriptRoot"\HCA\starwind.exe")){
     try{
         Write-Host "Download latest StarWindVSAN build" -NoNewline
-        Start-BitsTransfer -Source $StarWindVSANDownloadUri -Destination $Global:ScriptDir"\HCA\starwind.exe" `
+        Start-BitsTransfer -Source $StarWindVSANDownloadUri -Destination $PSScriptRoot"\HCA\starwind.exe" `
             -Description "Download latest StarWindVSAN build"
         Write-Host "`tOK" -ForegroundColor Green
     }
@@ -147,7 +147,7 @@ if (!(Test-Path -Path $Global:ScriptDir"\HCA\starwind.exe")){
 
 try{
     Write-Host "Install StarWindVSAN" -NoNewline
-    Start-Process -FilePath $Global:ScriptDir"\HCA\starwind.exe" -Wait
+    Start-Process -FilePath $PSScriptRoot"\HCA\starwind.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
@@ -158,7 +158,7 @@ catch{
 ### Install StarWind SLA
 
 try{
-    move-Item -Path $Global:ScriptDir"\HCA\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
+    move-Item -Path $PSScriptRoot"\HCA\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
     Write-Host "Install SLA LicenseAgreement" -NoNewline
     Start-Process -FilePath "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
@@ -169,27 +169,27 @@ catch{
 }
 
 Write-Host "Set Autostart ConfigurationScript.ps1"
-New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $Global:ScriptDir'\HCA\ConfigurationScript.ps1'" | Out-Null
+New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $PSScriptRoot'\HCA\ConfigurationScript.ps1'" | Out-Null
 
 ### Check manufacturer info - Baremetal or ESXi
 
 if ($Manufacturer -like "VMware*") {
     Write-Host "###This is ESXi HOST!###" -ForegroundColor Green
-    if (!(Test-Path -Path $Global:ScriptDir"\HCA\$VMwareToolsVersion")){
+    if (!(Test-Path -Path $PSScriptRoot"\HCA\$VMwareToolsVersion")){
 
         ### Download latest Vmware tools
 
         try{
             Write-Host "Downloading latest Vmware tools" -NoNewline
             Start-BitsTransfer -Source ($VMwareToolsDownloadUri.Replace('index.html', $VMwareToolsVersion)) `
-                -Destination $Global:ScriptDir"\HCA\$VMwareToolsVersion" `
+                -Destination $PSScriptRoot"\HCA\$VMwareToolsVersion" `
                 -Description "Downloading latest Vmware tools"
             Write-Host "`tOK" -ForegroundColor Green
 
         ### Install VMware tools
 
             Write-Host "Installing VMware tools" -NoNewline
-            Start-Process -FilePath $Global:ScriptDir"\HCA\$VMwareToolsVersion" -ArgumentList '/S /v "/qn REBOOT=R ADDLOCAL=ALL"' -Wait
+            Start-Process -FilePath $PSScriptRoot"\HCA\$VMwareToolsVersion" -ArgumentList '/S /v "/qn REBOOT=R ADDLOCAL=ALL"' -Wait
             Write-Host "`tOK" -ForegroundColor Green
 
             Write-Host "Installing powerCLI" -NoNewline
@@ -293,7 +293,7 @@ if ($Manufacturer -like "VMware*") {
     
     try{
         Write-Host "Creating scheduler task for Rescan_script.ps1" -NoNewline
-        Start-Process -FilePath schtasks.exe -ArgumentList "/Create /RU administrator /RP StarWind2015 /TN ""Rescan ESXi"" /XML ""$Global:ScriptDir""\HCA\rescan_esx.xml"" " -Wait
+        Start-Process -FilePath schtasks.exe -ArgumentList "/Create /RU administrator /RP StarWind2015 /TN ""Rescan ESXi"" /XML ""$PSScriptRoot""\HCA\rescan_esx.xml"" " -Wait
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
@@ -306,23 +306,23 @@ else{ ### Baremetal part of postinstall
     Write-Host "###This is BAREMETAL HOST!###" -ForegroundColor Green
 
     ### Download Dell OMSA
-    if(!(Test-Path -Path $Global:ScriptDir"\HCA\OMSA.zip")){    
+    if(!(Test-Path -Path $PSScriptRoot"\HCA\OMSA.zip")){    
         try{
             Write-Host "Downloading DELL OMSA" -NoNewline
-            Start-BitsTransfer -Source $OMSADownloadUri -Destination $Global:ScriptDir"\HCA\OMSA.zip" `
+            Start-BitsTransfer -Source $OMSADownloadUri -Destination $PSScriptRoot"\HCA\OMSA.zip" `
                 -Description "Downloading DELL OMSA"
             Write-Host "`tOK" -ForegroundColor Green
         
         ### Extracting Dell OMSA
         
             Write-Host "Extract OMSA" -NoNewline
-            Expand-Archive -Path $Global:ScriptDir"\HCA\OMSA.zip" -DestinationPath $Global:ScriptDir"\HCA\OMSA" -Force
+            Expand-Archive -Path $PSScriptRoot"\HCA\OMSA.zip" -DestinationPath $PSScriptRoot"\HCA\OMSA" -Force
             Write-Host "`tOK" -ForegroundColor Green
         
         ### Installing Dell OMSA
         
             Write-Host "Installing OMSA" -NoNewline
-            Start-Process -FilePath $Global:ScriptDir"\HCA\OMSA\windows\SystemsManagementx64\SysMgmtx64.msi" -ArgumentList 'ADDLOCAL=ALL /qn' -Wait
+            Start-Process -FilePath $PSScriptRoot"\HCA\OMSA\windows\SystemsManagementx64\SysMgmtx64.msi" -ArgumentList 'ADDLOCAL=ALL /qn' -Wait
             Write-Host "`tOK" -ForegroundColor Green
         }
         catch{
@@ -333,17 +333,17 @@ else{ ### Baremetal part of postinstall
     ### Download Mellanox WinOF drivers
 
     if ((Get-NetAdapter).InterfaceDescription -like 'Mellanox ConnectX-3*'){
-        if(!(Test-Path -Path $Global:ScriptDir"\HCA\MLNX_VPI_WinOF.exe")){    
+        if(!(Test-Path -Path $PSScriptRoot"\HCA\MLNX_VPI_WinOF.exe")){    
             try{
                     Write-Host "Downloading WinOF driver" -NoNewline
-                    Start-BitsTransfer -Source $MellanoxWinOFDownloadUri -Destination $Global:ScriptDir"\HCA\MLNX_VPI_WinOF.exe" `
+                    Start-BitsTransfer -Source $MellanoxWinOFDownloadUri -Destination $PSScriptRoot"\HCA\MLNX_VPI_WinOF.exe" `
                     -Description "Downloading WinOF driver"
                     Write-Host "`tOK" -ForegroundColor Green
 
                     ### Installing Mellanox WinOF Driver
 
                     Write-Host "Installing WinOF driver" -NoNewline
-                    Start-Process -FilePath $Global:ScriptDir"\HCA\MLNX_VPI_WinOF.exe" -ArgumentList ' /S /v/qn' -Wait
+                    Start-Process -FilePath $PSScriptRoot"\HCA\MLNX_VPI_WinOF.exe" -ArgumentList ' /S /v/qn' -Wait
                     Write-Host "`tOK" -ForegroundColor Green
                 }
                 catch{
@@ -356,17 +356,17 @@ else{ ### Baremetal part of postinstall
     ### Download Mellanox WinOF2 drivers
 
     if ((Get-NetAdapter).InterfaceDescription -like 'Mellanox ConnectX-4*'){
-        if(!(Test-Path -Path $Global:ScriptDir"\HCA\MLNX_WinOF2.exe")){  
+        if(!(Test-Path -Path $PSScriptRoot"\HCA\MLNX_WinOF2.exe")){  
             try{
                 Write-Host "Downloading WinOF driver" -NoNewline
-                Start-BitsTransfer -Source $MellanoxWinOF2DownloadUri -Destination $Global:ScriptDir"\HCA\MLNX_WinOF2.exe" `
+                Start-BitsTransfer -Source $MellanoxWinOF2DownloadUri -Destination $PSScriptRoot"\HCA\MLNX_WinOF2.exe" `
                 -Description "Downloading WinOF driver"
                 Write-Host "`tOK" -ForegroundColor Green
 
                 ### Installing Mellanox WinOF Driver
 
                 Write-Host "Installing WinOF driver" -NoNewline
-                Start-Process -FilePath $Global:ScriptDir"\HCA\MLNX_WinOF2.exe" -ArgumentList ' /S /v/qn' -Wait
+                Start-Process -FilePath $PSScriptRoot"\HCA\MLNX_WinOF2.exe" -ArgumentList ' /S /v/qn' -Wait
                 Write-Host "`tOK" -ForegroundColor Green
             }
             catch{
