@@ -16,6 +16,7 @@ $PostInstallScript      = "$PSScriptRoot\PostInstall.ps1"
 $UnattendXML            = "$PSScriptRoot\Autounattend.xml"
 $RescanXML              = "$PSScriptRoot\rescan_esx.xml"
 $SLAPath                = "$PSScriptRoot\SLA_LicenseAgreement.exe"
+$ConfigScript           = "$PSScriptRoot\ConfigurationScript.ps1"
 $EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR                = "$ISO_PARENT_DIR\BUILD\LCU"
 $OUTPUT_DIR             = "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
@@ -205,6 +206,10 @@ foreach($image in $IMAGES){
 
         Write-Host "Integrating SLA script" -NoNewline
         Copy-WithProgress -Source $SLAPath -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating configuration script" -NoNewline
+        Copy-WithProgress -Source $ConfigScript -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host "Integrating rescan XML" -NoNewline

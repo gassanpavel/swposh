@@ -302,6 +302,9 @@ if ($Manufacturer -like "VMware*") {
 else{ ### Baremetal part of postinstall
     Write-Host "###This is BAREMETAL HOST!###" -ForegroundColor Green
 
+    Write-Host "Set Autostart ConfigurationScript.ps1"
+	New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $Global:ScriptDir"\HCA\ConfigurationScript.ps1"" | Out-Null
+
     ### Download Dell OMSA
     if(!(Test-Path -Path $Global:ScriptDir"\HCA\OMSA.zip")){    
         try{
@@ -375,12 +378,12 @@ else{ ### Baremetal part of postinstall
 
     ### Install Roles and Features
     
-        try{
-        ### Install Hyper-V Role
+    try{
+    ### Install Hyper-V Role
 
-        Write-Host "Install Hyper-V Role" -NoNewline 
-        Install-WindowsFeature -Name Hyper-V -ComputerName $env:COMPUTERNAME -IncludeManagementTools
-        Write-Host "`tOK" -ForegroundColor Green
+    Write-Host "Install Hyper-V Role" -NoNewline 
+    Install-WindowsFeature -Name Hyper-V -ComputerName $env:COMPUTERNAME -IncludeManagementTools
+    Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
         Write-Host "`tError`n" -ForegroundColor Red
@@ -409,7 +412,7 @@ else{ ### Baremetal part of postinstall
         ### Install MPIO Role
 
         Write-Host "Install MPIO Role" -NoNewline 
-        Install-WindowsFeature -name Multipath-IO -Restart
+        Install-WindowsFeature -Name Multipath-IO -Restart
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
