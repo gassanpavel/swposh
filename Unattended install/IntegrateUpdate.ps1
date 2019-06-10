@@ -9,7 +9,7 @@ Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
 Import-Module -Name BitsTransfer
 
-$Iso                    = "E:\ISO\en_windows_server_2019_x64.iso"
+$Iso                    = "E:\ISO\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_22052019.ISO"
 $IsoFileName            = $ISO.split('\')[-1]
 $ISO_PARENT_DIR         = (split-path -Parent $ISO)
 $PostInstallScript      = "$PSScriptRoot\PostInstall.ps1"
@@ -243,8 +243,8 @@ else{
     }
 }
 
-Write-Host "Upload to B2" -ForegroundColor Green
-Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
-    "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
-Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
-    "upload-file SW-Support $OutputIsoFile $IsoFileName" -Wait -NoNewWindow
+# Write-Host "Upload to B2" -ForegroundColor Green
+# Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
+#     "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
+# Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
+#     "upload-file SW-Support $OutputIsoFile $IsoFileName" -Wait -NoNewWindow
