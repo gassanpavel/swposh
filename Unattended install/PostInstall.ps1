@@ -151,7 +151,7 @@ try{
     Write-Host "`tOK" -ForegroundColor Green
 
     ### Install StarWind SLA
-    Move-Item -Path $PSScriptRoot"\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
+    Move-Item -Path $PSScriptRoot"\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe"
     Write-Host "Install SLA LicenseAgreement" -NoNewline
     Start-Process -FilePath "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
@@ -162,15 +162,26 @@ catch{
 }
 
 ### Set ConfigurationScript to next boot
-
-Write-Host "Set Autostart ConfigurationScript.ps1"
-New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $PSScriptRoot'\ConfigurationScript.ps1'" | Out-Null
+try{
+    Write-Host "Set Autostart ConfigurationScript.ps1"
+    New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $PSScriptRoot'\ConfigurationScript.ps1'" -ErrorAction Continue | Out-Null
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n"
+}
 
 ### Set autologin count = 2
-
-Set-ItemProperty $RegPath "AutoAdminLogon" -Value "2" -type String 
-Set-ItemProperty $RegPath "DefaultUsername" -Value "Administrator" -type String 
-Set-ItemProperty $RegPath "DefaultPassword" -Value "StarWind2015" -type String
+try{
+    Write-Host "Set Autostart ConfigurationScript.ps1"
+    Set-ItemProperty $RegPath "AutoAdminLogon" -Value "2" -type String 
+    Set-ItemProperty $RegPath "DefaultUsername" -Value "Administrator" -type String 
+    Set-ItemProperty $RegPath "DefaultPassword" -Value "StarWind2015" -type String
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n"
+}
 
 ### Check manufacturer info - Baremetal or ESXi
 
