@@ -1,4 +1,4 @@
-﻿cls
+﻿Clear-Host
 
 write-host "(C) StarWind Support Team 2017
 Welcome to the HCA configuration script.
@@ -632,7 +632,7 @@ else
 if ($selectioniscsi -eq 2)
 {
 	$iscsinic = Get-NetAdapter | Where-Object –FilterScript { $_.name -like "iscsi-2?-?" }
-	if ($iscsinic -eq $null)
+	if ($null -eq $iscsinic)
 	{
 		Write-Host "iscsi-2 interface....False." -ForegroundColor Red
 		do
@@ -727,7 +727,7 @@ if ($selectioniscsi -eq 2)
 	#--------------------------------------------------------------------------
 }
 $syncnic = Get-NetAdapter | Where-Object –FilterScript { $_.name -like "sync-1?-?" }
-if ($syncnic -eq $null)
+if ($null -eq $syncnic)
 {
 	Write-Host "sync-1 interface....False." -ForegroundColor Red
 	do
@@ -1079,7 +1079,7 @@ write-host "
 Checking Windows Update"
 write-host "---------------------------"
 $update = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update" -Name "AUOptions" -ErrorAction SilentlyContinue
-if (($update.AUOptions -ne $null) -and ($update.AUOptions -eq "3"))
+if (($null -ne $update.AUOptions) -and ($update.AUOptions -eq "3"))
 {
 	write-host "Windows Update....ОК" -ForegroundColor Green
 }
@@ -1122,7 +1122,7 @@ if ($vmware -eq 0)
 		if ($selection -eq "y")
 		{
 			$AutoRunScript = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "AutoRunScript" -ErrorAction SilentlyContinue
-			if ($AutoRunScript -eq $null)
+			if ($null -eq $AutoRunScript)
 			{
 				$curDir = $MyInvocation.MyCommand.Definition | split-path -parent
 				$name = $MyInvocation.MyCommand.Name
@@ -1417,54 +1417,11 @@ if (`$file[1] -ne "`$counter = 1") {
 
 #------------------------------------------------------
 write-host "
-Installing StarWind Virtual SAN"
-write-host "---------------------------"
-do
-{
-	$selectionStarWind = Read-Host "Would you like to install StarWind Virtual SAN in manual mode? [y/n]"
-	if ($selectionStarWind -eq "y" -or $selectionStarWind -eq "n")
-	{
-		$ok_selectionStarWind = $true
-	}
-	else
-	{
-		$ok_selectionStarWind = $false
-	}
-}
-until ($ok_selectionStarWind)
-if ($selectionStarWind -eq "y")
-{		
-	Start-Process C:\Users\$user\Desktop\Remove-me\starwind-v8.exe -Wait
-}
-
-#------------------------------------------------------
-#Checking whether the server is manufactured by Dell. If so, Dell OpenManage is installed
-do
-{
-	$installDell = read-host "Would you like to install Dell OpenManage? [y/n]"
-	if ($installDell -eq "y" -or $installDell -eq "n")
-	{
-		$ok_installDell = $true
-	}
-	else
-	{
-		$ok_installDell = $false
-	}
-}
-until ($ok_installDell)
-
-if ($installDell -eq "y")
-{
-	Start-Process C:\Users\$user\Desktop\Remove-me\OpenManage\windows\setup.exe -Wait
-}
-
-#------------------------------------------------------
-write-host "
 Run the script after restart"
 write-host "---------------------------"
 
 $AutoRunScript = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "AutoRunScript" -ErrorAction SilentlyContinue
-if ($AutoRunScript -eq $null)
+if ($null -eq $AutoRunScript)
 {
 	do
 	{

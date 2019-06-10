@@ -1,0 +1,1 @@
+.\iperf.exe -s

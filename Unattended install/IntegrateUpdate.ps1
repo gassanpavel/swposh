@@ -17,6 +17,8 @@ $UnattendXML            = "$PSScriptRoot\Autounattend.xml"
 $RescanXML              = "$PSScriptRoot\rescan_esx.xml"
 $SLAPath                = "$PSScriptRoot\SLA_LicenseAgreement.exe"
 $ConfigScript           = "$PSScriptRoot\ConfigurationScript.ps1"
+$IPerf                  = "$PSScriptRoot\iPerf"
+$StorageTest            = "$PSScriptRoot\StorageTest_v0.8"
 $EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR                = "$ISO_PARENT_DIR\BUILD\LCU"
 $OUTPUT_DIR             = "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
@@ -204,7 +206,7 @@ foreach($image in $IMAGES){
         Copy-WithProgress -Source $PostInstallScript -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
-        Write-Host "Integrating SLA script" -NoNewline
+        Write-Host "Integrating SLA" -NoNewline
         Copy-WithProgress -Source $SLAPath -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
@@ -214,6 +216,14 @@ foreach($image in $IMAGES){
 
         Write-Host "Integrating rescan XML" -NoNewline
         Copy-WithProgress -Source $RescanXML -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating Iperf" -NoNewline
+        Copy-WithProgress -Source $IPerf -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating StorageTest" -NoNewline
+        Copy-WithProgress -Source $StorageTest -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline

@@ -1,0 +1,52 @@
+запуск сервера
+.\iperf.exe -s
+#-------------------------------------
+
+1Gb-10Gb - networks
+
+
+.\iperf.exe -c 172.16.10.2 -t 150 -i 15 > c:\iscsi-11-2-net.txt
+
+.\iperf.exe -c 172.16.10.4 -t 150 -i 15 > c:\iscsi-21-2-net.txt
+
+
+.\iperf.exe -c 172.16.20.2 -t 150 -i 15 > c:\sync-11-2-net.txt
+
+.\iperf.exe -c 172.16.20.4 -t 150 -i 15 > c:\sync-21-2-net.txt
+
+
+
+.\iperf.exe -c 172.16.10.1 -t 150 -i 15 > c:\iscsi-12-1-net.txt
+
+.\iperf.exe -c 172.16.10.3 -t 150 -i 15 > c:\iscsi-22-1-net.txt
+
+
+.\iperf.exe -c 172.16.20.1 -t 150 -i 15 > c:\sync-12-1-net.txt
+
+.\iperf.exe -c 172.16.20.3 -t 150 -i 15 > c:\sync-22-1-net.txt
+
+
+#-----------------------------------
+>
+=40Gb - networks
+
+
+.\iperf.exe -c 172.16.10.2 -t 150 -i 15 -P 12 -w 16M > c:\iscsi-11-2-net.txt
+
+.\iperf.exe -c 172.16.10.4 -t 150 -i 15 -P 12 -w 16M > c:\iscsi-21-2-net.txt
+
+
+.\iperf.exe -c 172.16.20.2 -t 150 -i 15 -P 12 -w 16M > c:\sync-11-2-net.txt
+
+.\iperf.exe -c 172.16.20.4 -t 150 -i 15 -P 12 -w 16M > c:\sync-21-2-net.txt
+
+
+
+.\iperf.exe -c 172.16.10.1 -t 150 -i 15 -P 12 -w 16M > c:\iscsi-12-1-net.txt
+
+.\iperf.exe -c 172.16.10.3 -t 150 -i 15 -P 12 -w 16M > c:\iscsi-22-1-net.txt
+
+
+.\iperf.exe -c 172.16.20.1 -t 150 -i 15 -P 12 -w 16M > c:\sync-12-1-net.txt
+
+.\iperf.exe -c 172.16.20.3 -t 150 -i 15 -P 12 -w 16M > c:\sync-22-1-net.txt

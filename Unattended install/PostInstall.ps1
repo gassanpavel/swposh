@@ -3,7 +3,6 @@ Import-Module BitsTransfer
 
 ### Define variables
 $Manufacturer                   = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
-$ScriptDir                      = (Split-Path -Parent $MyInvocation.MyCommand.Definition)
 $OSVersion                      = ((Get-CimInstance Win32_OperatingSystem).Caption).split(" ")[3]
 $VCppDownloadUri                = 'https://aka.ms/vs/16/release/VC_redist.x64.exe'
 $VMwareToolsDownloadUri         = 'https://packages.vmware.com/tools/esx/latest/windows/x64/index.html'
@@ -15,6 +14,7 @@ $MellanoxWinOFDownloadUri       = 'http://www.mellanox.com/downloads/WinOF/MLNX_
 $MellanoxWinOF2DownloadUri      = 'http://www.mellanox.com/downloads/WinOF/MLNX_WinOF2-2_20_50000_All_x64.exe'
 $StarWindHealthUser             = 'Health'
 $StarWindHealthPassword         = 'StarWind2015!'
+$RegPath                        = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
 
 ### Disable Firewall 
 
@@ -84,7 +84,7 @@ if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
         Start-BitsTransfer -Source $VCppDownloadUri -Destination $PSScriptRoot"\VC_redist.x64.exe" `
             -Description "Downloading Visual C++ Redistribution"
         Write-Host "`tOK" -ForegroundColor Green
-        
+    
         ### Install C++ Redistribution
         Write-Host "Installing Visual C++ Redistribution" -NoNewline
         Start-Process -FilePath $PSScriptRoot"\VC_redist.x64.exe" -ArgumentList "/install /q /norestart" -Wait
@@ -92,7 +92,7 @@ if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
     }
     catch{
         Write-Host "`tError`n" -ForegroundColor Red
-        $_
+        Write-Host "Cant download VC++. Please download it from $VCppDownloadUri and install manually"
     }
 }
 
@@ -126,7 +126,7 @@ if (!(Test-Path -Path $PSScriptRoot"\starwindhealthservice.zip")){
     }
     catch{
         Write-Host "`tError`n" -ForegroundColor Red
-        $_
+        Write-Host "Cant download StaWindHealth. Please download it from $StarWindHealthDownloadUri and install manually"
     }
 }
 ### Download latest StarWindVSAN build
@@ -139,7 +139,7 @@ if (!(Test-Path -Path $PSScriptRoot"\starwind.exe")){
     }
     catch{
         Write-Host "`tError`n" -ForegroundColor Red
-        $_
+        Write-Host "Cant download StaWindVSAN. Please download it from $StarWindVSANDownloadUri and install manually"
     }
 }
 
@@ -149,16 +149,9 @@ try{
     Write-Host "Install StarWindVSAN" -NoNewline
     Start-Process -FilePath $PSScriptRoot"\starwind.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
-}
-catch{
-    Write-Host "`tError`n" -ForegroundColor Red
-    $_
-}
 
-### Install StarWind SLA
-
-try{
-    move-Item -Path $PSScriptRoot"\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
+    ### Install StarWind SLA
+    Move-Item -Path $PSScriptRoot"\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\"
     Write-Host "Install SLA LicenseAgreement" -NoNewline
     Start-Process -FilePath "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe" -Wait
     Write-Host "`tOK" -ForegroundColor Green
@@ -172,6 +165,12 @@ catch{
 
 Write-Host "Set Autostart ConfigurationScript.ps1"
 New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $PSScriptRoot'\ConfigurationScript.ps1'" | Out-Null
+
+### Set autologin count = 2
+
+Set-ItemProperty $RegPath "AutoAdminLogon" -Value "2" -type String 
+Set-ItemProperty $RegPath "DefaultUsername" -Value "Administrator" -type String 
+Set-ItemProperty $RegPath "DefaultPassword" -Value "StarWind2015" -type String
 
 ### Check manufacturer info - Baremetal or ESXi
 
@@ -423,3 +422,8 @@ else{ ### Baremetal part of postinstall
         $_
     }
 }
+
+### Reboot node to run configuration script
+Write-Host "Computer will be rebooted in 5 sec..."
+Start-Sleep -Seconds 5
+Restart-Computer -Force
