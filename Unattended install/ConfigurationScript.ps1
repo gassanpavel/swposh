@@ -532,7 +532,7 @@ Enter the required interface's ifIndex value"
 	
 }
 $iscsinic = Get-NetAdapter | Where-Object –FilterScript { $_.name -like "iscsi-1?-?" }
-if ($iscsinic -eq $null)
+if ($null -eq $iscsinic)
 {
 	Write-Host "iscsi-1 interface....False." -ForegroundColor Red
 	do
@@ -1401,7 +1401,7 @@ if (`$file[1] -ne "`$counter = 1") {
 "@
 				$taskbody > C:\RescanESX.xml
 				schtasks.exe /create /RU administrator /RP StarWind2015 /tn "Rescan ESXi" /XML "C:\RescanESX.xml"
-				Remove-Item –path C:\RescanESX.xml
+				Remove-Item –path C:\RescanESX.xml -Force -ErrorAction SilentlyContinue
 			}
 			else
 			{
@@ -1468,27 +1468,27 @@ else
 	}
 }
 
-$isStarwind = Test-Path "c:\Users\$user\Desktop\starwind.exe"
-if ($isStarwind -eq "True")
-{
-	do
-	{
-		$selection = Read-Host "Would you like to delete StarWind installation file? [y/n]"
-		if ($selection -eq "y" -or $selection -eq "n")
-		{
-			$ok_selection = $true
-		}
-		else
-		{
-			$ok_selection = $false
-		}
-	}
-	until ($ok_selection)
-	if ($selection -eq "y")
-	{
-		Remove-Item "c:\Users\$user\Desktop\starwind.exe"
-	}
-}
+# $isStarwind = Test-Path "c:\Users\$user\Desktop\starwind.exe"
+# if ($isStarwind -eq "True")
+# {
+# 	do
+# 	{
+# 		$selection = Read-Host "Would you like to delete StarWind installation file? [y/n]"
+# 		if ($selection -eq "y" -or $selection -eq "n")
+# 		{
+# 			$ok_selection = $true
+# 		}
+# 		else
+# 		{
+# 			$ok_selection = $false
+# 		}
+# 	}
+# 	until ($ok_selection)
+# 	if ($selection -eq "y")
+# 	{
+# 		Remove-Item "c:\Users\$user\Desktop\starwind.exe"
+# 	}
+# }
 
 $hcafolder = Test-Path "c:\HCA"
 if (!$hcafolder)

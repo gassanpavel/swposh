@@ -41,6 +41,7 @@ catch{
 }
 
 ### Enable WinRM
+
 try{
     Write-Host "Enable WinRM connections" -NoNewline
     Enable-PSRemoting -SkipNetworkProfileCheck -Force | Out-Null
@@ -52,8 +53,9 @@ catch{
     $_
 }
 
+### Installing NuGet package provider
+
 try{
-    ### Installing NuGet package provider
     Write-Host "Installing NuGet package provider" -NoNewline
     Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Confirm:$false -Force | Out-Null
     Write-Host "`tOK" -ForegroundColor Green
@@ -77,6 +79,7 @@ catch{
 }
 
 ### Download and install C++ Redistribution
+
 if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
     try{
         ### Download C++ Redistribution
@@ -97,6 +100,7 @@ if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
 }
 
 ### Download latest StarWindHealthService
+
 if (!(Test-Path -Path $PSScriptRoot"\starwindhealthservice.zip")){
     try{
         Write-Host "Downloading latest StarWindHealthService" -NoNewline
@@ -129,7 +133,9 @@ if (!(Test-Path -Path $PSScriptRoot"\starwindhealthservice.zip")){
         Write-Host "Cant download StaWindHealth. Please download it from $StarWindHealthDownloadUri and install manually"
     }
 }
+
 ### Download latest StarWindVSAN build
+
 if (!(Test-Path -Path $PSScriptRoot"\starwind.exe")){
     try{
         Write-Host "Download latest StarWindVSAN build" -NoNewline
@@ -162,19 +168,20 @@ catch{
 }
 
 ### Set ConfigurationScript to next boot
+
 try{
     Write-Host "Set Autostart ConfigurationScript.ps1"
-    New-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript -propertytype String -value "Powershell $PSScriptRoot'\ConfigurationScript.ps1'" -ErrorAction Continue | Out-Null
+    New-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript" -propertytype String -value "Powershell $PSScriptRoot'\ConfigurationScript.ps1'" | Out-Null
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
     Write-Host "`tError`n"
 }
 
-### Set autologin count = 2
+### Set autologin count = 1
 try{
     Write-Host "Set Autostart ConfigurationScript.ps1"
-    Set-ItemProperty $RegPath "AutoAdminLogon" -Value "2" -type String 
+    Set-ItemProperty $RegPath "AutoAdminLogon" -Value "1" -type String 
     Set-ItemProperty $RegPath "DefaultUsername" -Value "Administrator" -type String 
     Set-ItemProperty $RegPath "DefaultPassword" -Value "StarWind2015" -type String
     Write-Host "`tOK" -ForegroundColor Green
@@ -391,9 +398,9 @@ else{ ### Baremetal part of postinstall
 
     ### Install Roles and Features
     
-    try{
     ### Install Hyper-V Role
-
+    
+    try{
     Write-Host "Install Hyper-V Role" -NoNewline 
     Install-WindowsFeature -Name Hyper-V -ComputerName $env:COMPUTERNAME -IncludeManagementTools
     Write-Host "`tOK" -ForegroundColor Green
@@ -403,9 +410,9 @@ else{ ### Baremetal part of postinstall
         $_
     }
 
-    try{
-        ### Install Failover-Clustering Role
+    ### Install Failover-Clustering Role
 
+    try{
         Write-Host "Install Failover-Clustering Role" -NoNewline 
         Install-WindowsFeature -Name Failover-Clustering -ComputerName $env:COMPUTERNAME -IncludeManagementTools
         Write-Host "`tOK" -ForegroundColor Green
@@ -415,17 +422,23 @@ else{ ### Baremetal part of postinstall
         $_
     }
 
-    try{
-        ### Enable MSiSCSI service
+    ### Enable MSiSCSI service
 
+    try{
         Write-Host "Enable autostart iscsi service" -NoNewline 
         Get-Service -Name MSiSCSI | Start-Service | Set-Service -Name MSiSCSI -StartupType Automatic
         Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
+    }
 
-        ### Install MPIO Role
+    ### Install MPIO Role
 
+    try{
         Write-Host "Install MPIO Role" -NoNewline 
-        Install-WindowsFeature -Name Multipath-IO -Restart
+        Install-WindowsFeature -Name Multipath-IO
         Write-Host "`tOK" -ForegroundColor Green
     }
     catch{
@@ -435,6 +448,6 @@ else{ ### Baremetal part of postinstall
 }
 
 ### Reboot node to run configuration script
-Write-Host "Computer will be rebooted in 5 sec..."
-Start-Sleep -Seconds 5
+Write-Host "Computer will be rebooted in 15 sec..."
+Start-Sleep -Seconds 15
 Restart-Computer -Force

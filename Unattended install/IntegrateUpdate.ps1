@@ -9,7 +9,7 @@ Import-Module -Name PS.B2
 Import-Module -Name LatestUpdate
 Import-Module -Name BitsTransfer
 
-$Iso                    = "E:\ISO\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US_UPDATED_22052019.ISO"
+$Iso                    = "E:\ISO\14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US.ISO"
 $IsoFileName            = $ISO.split('\')[-1]
 $ISO_PARENT_DIR         = (split-path -Parent $ISO)
 $PostInstallScript      = "$PSScriptRoot\PostInstall.ps1"
@@ -19,6 +19,7 @@ $SLAPath                = "$PSScriptRoot\SLA_LicenseAgreement.exe"
 $ConfigScript           = "$PSScriptRoot\ConfigurationScript.ps1"
 $IPerf                  = "$PSScriptRoot\iPerf"
 $StorageTest            = "$PSScriptRoot\StorageTest_v0.8"
+$CleanUp                = "$PSScriptRoot\CleanUp.ps1"
 $EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR                = "$ISO_PARENT_DIR\BUILD\LCU"
 $OUTPUT_DIR             = "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
@@ -224,6 +225,10 @@ foreach($image in $IMAGES){
 
         Write-Host "Integrating StorageTest" -NoNewline
         Copy-WithProgress -Source $StorageTest -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating CleanUp script" -NoNewline
+        Copy-WithProgress -Source $CleanUp -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline
