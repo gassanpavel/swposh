@@ -15,6 +15,8 @@ $MellanoxWinOF2DownloadUri      = 'http://www.mellanox.com/downloads/WinOF/MLNX_
 $StarWindHealthUser             = 'Health'
 $StarWindHealthPassword         = 'StarWind2015!'
 $RegPath                        = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+$NetFramework472Uri             = 'https://go.microsoft.com/fwlink/?LinkId=863265'
+$NetFramework48Uri              = 'https://go.microsoft.com/fwlink/?linkid=2088631'
 
 ### Disable Firewall 
 
@@ -76,6 +78,40 @@ try{
 catch{
     Write-Host "`tError`n" -ForegroundColor Red
     $_
+}
+
+try{
+    ### Download .Net 4.7.2 framework
+    Write-Host "Downloading .Net 4.7.2 framework" -NoNewline
+    Start-BitsTransfer -Source $NetFramewor472kUri -Destination $PSScriptRoot"\DotNet472.exe" `
+        -Description "Downloading .Net 4.7.2 framework"
+    Write-Host "`tOK" -ForegroundColor Green
+
+    ### Install C++ Redistribution
+    Write-Host "Installing .Net 4.7.2 framework" -NoNewline
+    Start-Process -FilePath $PSScriptRoot"\DotNet472.exe" -ArgumentList "/q /norestart" -Wait
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    Write-Host "Cant download .Net 4.7.2 framework. Please download it from $NetFramework472Uri and install manually"
+}
+
+try{
+    ### Download .Net 4.8 framework
+    Write-Host "Downloading .Net 4.8 framework" -NoNewline
+    Start-BitsTransfer -Source $NetFramewor48kUri -Destination $PSScriptRoot"\DotNet48.exe" `
+        -Description "Downloading .Net 4.8 framework"
+    Write-Host "`tOK" -ForegroundColor Green
+
+    ### Install C++ Redistribution
+    Write-Host "Installing .Net 4.8 framework" -NoNewline
+    Start-Process -FilePath $PSScriptRoot"\DotNet48.exe" -ArgumentList "/q /norestart" -Wait
+    Write-Host "`tOK" -ForegroundColor Green
+}
+catch{
+    Write-Host "`tError`n" -ForegroundColor Red
+    Write-Host "Cant download .Net 4.8 framework. Please download it from $NetFramework48Uri and install manually"
 }
 
 ### Download and install C++ Redistribution
@@ -324,32 +360,36 @@ if ($Manufacturer -like "VMware*") {
 
 else{ ### Baremetal part of postinstall
     Write-Host "###This is BAREMETAL HOST!###" -ForegroundColor Green
-
-    ### Download Dell OMSA
-    if(!(Test-Path -Path $PSScriptRoot"\OMSA.zip")){    
-        try{
-            Write-Host "Downloading DELL OMSA" -NoNewline
-            Start-BitsTransfer -Source $OMSADownloadUri -Destination $PSScriptRoot"\OMSA.zip" `
-                -Description "Downloading DELL OMSA"
-            Write-Host "`tOK" -ForegroundColor Green
-        
-        ### Extracting Dell OMSA
-        
-            Write-Host "Extract OMSA" -NoNewline
-            Expand-Archive -Path $PSScriptRoot"\OMSA.zip" -DestinationPath $PSScriptRoot"\OMSA" -Force
-            Write-Host "`tOK" -ForegroundColor Green
-        
-        ### Installing Dell OMSA
-        
-            Write-Host "Installing OMSA" -NoNewline
-            Start-Process -FilePath $PSScriptRoot"\OMSA\windows\SystemsManagementx64\SysMgmtx64.msi" -ArgumentList 'ADDLOCAL=ALL /qn' -Wait
-            Write-Host "`tOK" -ForegroundColor Green
-        }
-        catch{
-            Write-Host "`tError`n" -ForegroundColor Red
-            $_
+    
+    if ($Manufacturer -like "*Dell*")
+    {
+        ### Download Dell OMSA
+        if(!(Test-Path -Path $PSScriptRoot"\OMSA.zip")){    
+            try{
+                Write-Host "Downloading DELL OMSA" -NoNewline
+                Start-BitsTransfer -Source $OMSADownloadUri -Destination $PSScriptRoot"\OMSA.zip" `
+                    -Description "Downloading DELL OMSA"
+                Write-Host "`tOK" -ForegroundColor Green
+            
+            ### Extracting Dell OMSA
+            
+                Write-Host "Extract OMSA" -NoNewline
+                Expand-Archive -Path $PSScriptRoot"\OMSA.zip" -DestinationPath $PSScriptRoot"\OMSA" -Force
+                Write-Host "`tOK" -ForegroundColor Green
+            
+            ### Installing Dell OMSA
+            
+                Write-Host "Installing OMSA" -NoNewline
+                Start-Process -FilePath $PSScriptRoot"\OMSA\windows\SystemsManagementx64\SysMgmtx64.msi" -ArgumentList 'ADDLOCAL=ALL /qn' -Wait
+                Write-Host "`tOK" -ForegroundColor Green
+            }
+            catch{
+                Write-Host "`tError`n" -ForegroundColor Red
+                $_
+            }
         }
     }
+    
     ### Download Mellanox WinOF drivers
 
     if ((Get-NetAdapter).InterfaceDescription -like 'Mellanox ConnectX-3*'){
@@ -399,7 +439,7 @@ else{ ### Baremetal part of postinstall
     ### Install Roles and Features
     
     ### Install Hyper-V Role
-    
+
     try{
     Write-Host "Install Hyper-V Role" -NoNewline 
     Install-WindowsFeature -Name Hyper-V -ComputerName $env:COMPUTERNAME -IncludeManagementTools
