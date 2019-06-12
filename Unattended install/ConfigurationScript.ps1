@@ -370,7 +370,7 @@ if ($countwin -gt 0)
 }
 #D--------------------------------------------------------------------
 $drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'd:'"
-if ($drive -eq $null)
+if ($null -eq $drive)
 {
 	write-host "Letter D: is not assigned to any disk" -ForegroundColor Red
 }
