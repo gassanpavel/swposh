@@ -83,7 +83,7 @@ catch{
 try{
     ### Download .Net 4.7.2 framework
     Write-Host "Downloading .Net 4.7.2 framework" -NoNewline
-    Start-BitsTransfer -Source $NetFramewor472kUri -Destination $PSScriptRoot"\DotNet472.exe" `
+    Start-BitsTransfer -Source $NetFramework472Uri -Destination $PSScriptRoot"\DotNet472.exe" `
         -Description "Downloading .Net 4.7.2 framework"
     Write-Host "`tOK" -ForegroundColor Green
 
@@ -93,14 +93,14 @@ try{
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
-    Write-Host "`tError`n" -ForegroundColor Red
-    Write-Host "Cant download .Net 4.7.2 framework. Please download it from $NetFramework472Uri and install manually"
+    Write-Host "`tError" -ForegroundColor Red
+    Write-Host "Cant download .Net 4.7.2 framework. Please download it from $NetFramework472Uri and install manually`n" -ForegroundColor Yellow
 }
 
 try{
     ### Download .Net 4.8 framework
     Write-Host "Downloading .Net 4.8 framework" -NoNewline
-    Start-BitsTransfer -Source $NetFramewor48kUri -Destination $PSScriptRoot"\DotNet48.exe" `
+    Start-BitsTransfer -Source $NetFramework48Uri -Destination $PSScriptRoot"\DotNet48.exe" `
         -Description "Downloading .Net 4.8 framework"
     Write-Host "`tOK" -ForegroundColor Green
 
@@ -110,8 +110,8 @@ try{
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
-    Write-Host "`tError`n" -ForegroundColor Red
-    Write-Host "Cant download .Net 4.8 framework. Please download it from $NetFramework48Uri and install manually"
+    Write-Host "`tError" -ForegroundColor Red
+    Write-Host "Cant download .Net 4.8 framework. Please download it from $NetFramework48Uri and install manually`n" -ForegroundColor Yellow
 }
 
 ### Download and install C++ Redistribution
@@ -207,7 +207,7 @@ catch{
 
 try{
     Write-Host "Set Autostart ConfigurationScript.ps1"
-    New-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run AutoRunScript" -propertytype String -value "Powershell $PSScriptRoot'\ConfigurationScript.ps1'" | Out-Null
+    New-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" AutoRunScript -propertytype String -value "Powershell $PSScriptRoot'\ConfigurationScript.ps1'" | Out-Null
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
@@ -216,7 +216,7 @@ catch{
 
 ### Set autologin count = 1
 try{
-    Write-Host "Set Autostart ConfigurationScript.ps1"
+    Write-Host "Set AutoLogin count to 1"
     Set-ItemProperty $RegPath "AutoAdminLogon" -Value "1" -type String 
     Set-ItemProperty $RegPath "DefaultUsername" -Value "Administrator" -type String 
     Set-ItemProperty $RegPath "DefaultPassword" -Value "StarWind2015" -type String

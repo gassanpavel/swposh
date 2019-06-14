@@ -220,11 +220,11 @@ foreach($image in $IMAGES){
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host "Integrating Iperf" -NoNewline
-        Copy-WithProgress -Source $IPerf -Destination "$WIM_MOUNT_DIR\HCA\"
+        Copy-WithProgress -Source $IPerf -Destination "$WIM_MOUNT_DIR\HCA\Iperf\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host "Integrating StorageTest" -NoNewline
-        Copy-WithProgress -Source $StorageTest -Destination "$WIM_MOUNT_DIR\HCA\"
+        Copy-WithProgress -Source $StorageTest -Destination "$WIM_MOUNT_DIR\HCA\StorageTest\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host "Integrating CleanUp script" -NoNewline
@@ -258,8 +258,8 @@ else{
     }
 }
 
-# Write-Host "Upload to B2" -ForegroundColor Green
-# Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
-#     "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
-# Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
-#     "upload-file SW-Support $OutputIsoFile $IsoFileName" -Wait -NoNewWindow
+Write-Host "Upload to B2" -ForegroundColor Green
+Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
+    "authorize-account 0024bd6b78b8d9e0000000007 K0029MGiCqkALf6oNL1L7MHOLidQSpU" -NoNewWindow -Wait
+Start-Process -FilePath "C:\Python27\Scripts\b2.exe" -ArgumentList `
+    "upload-file SW-Support $OutputIsoFile $IsoFileName" -Wait -NoNewWindow
