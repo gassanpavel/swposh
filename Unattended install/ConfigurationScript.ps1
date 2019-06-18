@@ -369,27 +369,27 @@ if ($countwin -gt 0)
 	}
 }
 #D--------------------------------------------------------------------
-$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'd:'"
+$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'S:'"
 if ($null -eq $drive)
 {
-	write-host "Letter D: is not assigned to any disk" -ForegroundColor Red
+	write-host "Letter S: is not assigned to any disk" -ForegroundColor Red
 }
 else
 {
 	if ($drive.DriveType -eq 3)
 	{
-		$StoragePartition = Get-Partition -DriveLetter "d" | Select-Object  DiskNumber
+		$StoragePartition = Get-Partition -DriveLetter "S" | Select-Object  DiskNumber
 		$StoragePartitionStyle = Get-Disk -Number $StoragePartition.DiskNumber | Select-Object PartitionStyle
 		if ($drive.Label -eq "Storage")
 		{
-			Write-Host "Label of disk D:....OK" -ForegroundColor Green
+			Write-Host "Label of disk S:....OK" -ForegroundColor Green
 		}
 		else
 		{
-			Write-Host "Label of disk D:....False" -ForegroundColor Red
+			Write-Host "Label of disk S:....False" -ForegroundColor Red
 			do
 			{
-				$selection = Read-Host "Would you like to change the label of disk D:? [y/n]"
+				$selection = Read-Host "Would you like to change the label of disk S:? [y/n]"
 				if ($selection -eq "y" -or $selection -eq "n")
 				{
 					$ok_selection = $true
@@ -408,16 +408,16 @@ else
 		}
 		if ($StoragePartitionStyle.PartitionStyle -eq "GPT")
 		{
-			Write-Host "Disk D: partition scheme....OK" -ForegroundColor Green
+			Write-Host "Disk S: partition scheme....OK" -ForegroundColor Green
 		}
 		else
 		{
-			Write-Host "Disk D: partition scheme....False. Change to GPT!" -ForegroundColor Red
+			Write-Host "Disk S: partition scheme....False. Change to GPT!" -ForegroundColor Red
 		}
 	}
 	else
 	{
-		write-host "D: drive of this type is not suitable for Storage!" -ForegroundColor Red
+		write-host "S: drive of this type is not suitable for Storage!" -ForegroundColor Red
 	}
 }
 #pagefile--------------------------------------------------------------------
