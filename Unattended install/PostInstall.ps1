@@ -86,7 +86,7 @@ if ((Get-PhysicalDisk -CanPool $true).count -ge 2)
 }
 
     ### If RAW disk count eq to 1 - create partition and format it
-    
+
 elseif ((Get-Disk | Where-Object {$_.PartitionStyle -eq "RAW"} | Measure-Object).Count -eq 1){
     foreach ($disk in $D = Get-Disk | Where-Object {$_.PartitionStyle -like "*RAW*"})
     {
@@ -183,7 +183,7 @@ try{
         -Description "Downloading .Net 4.8 framework"
     Write-Host "`tOK" -ForegroundColor Green
 
-    ### Install C++ Redistribution
+    ### Install .Net 4.8 framework
     Write-Host "Installing .Net 4.8 framework" -NoNewline
     Start-Process -FilePath $PSScriptRoot"\DotNet48.exe" -ArgumentList "/q /norestart" -Wait
     Write-Host "`tOK" -ForegroundColor Green

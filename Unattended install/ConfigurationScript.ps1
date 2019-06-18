@@ -129,57 +129,57 @@ if ($countRAW.count -ge 1)
 		}
 	}
 }
-$DiskReserved = Get-Partition | Where-Object –FilterScript { $_.isBoot -Eq "True" } | Select-Object disknumber
-$DiskNumber = $DiskReserved.disknumber
-$DiskReserved = Get-Partition -DiskNumber $DiskNumber | Measure-Object -Property Size -Sum
-$DiskSize = Get-Disk -Number $DiskNumber | Select-Object size
-$spase = $DiskSize.size - $DiskReserved.sum
-if ($spase -ge 42949672960)
-{
-	do
-	{
-		$selection = Read-Host "The system disk has some unallocated space,would you like to allocate it?: [y/n]"
-		if ($selection -eq "y" -or $selection -eq "n")
-		{
-			$ok_selection = $true
-		}
-		else
-		{
-			$ok_selection = $false
-		}
-	}
-	until ($ok_selection)
-	if ($selection -eq "y")
-	{
-		$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'd:'"
-		if ($drive.DriveType -eq 3)
-		{
-			New-Partition -DiskNumber $DiskNumber -DriveLetter S -UseMaximumSize | Out-Null
-			Format-Volume -DriveLetter S -FileSystem NTFS -NewFileSystemLabel SSD -Confirm:$false | Out-Null
-		}
-		elseif ($drive.DriveType -eq 5 -or $drive.DriveType -eq 2)
-		{
-			$selection1 = Read-Host "Drive Letter D is already assigned to either Compact disk or Removable disk,would you like to change Drive Letter?: [y/n]"
-			if ($selection1 -eq "y")
-			{
-				#$Eject =  New-Object -comObject Shell.Application
-				#$Eject.NameSpace(17).ParseName($drive.driveletter).InvokeVerb("Eject")
-				Set-WmiInstance -input $drive -Arguments @{ DriveLetter = "F:" } | Out-Null
-				New-Partition -DiskNumber $DiskNumber -DriveLetter D -UseMaximumSize | Out-Null
-				Format-Volume -DriveLetter D -FileSystem NTFS -NewFileSystemLabel Storage -Confirm:$false | Out-Null
-			}
-			elseif ($selection1 -eq "n")
-			{
-				# do nothing
-			}
-		}
-		else
-		{
-			New-Partition -DiskNumber $DiskNumber -DriveLetter D -UseMaximumSize | Out-Null
-			Format-Volume -DriveLetter D -FileSystem NTFS -NewFileSystemLabel Storage -Confirm:$false | Out-Null
-		}
-	}
-}
+# $DiskReserved = Get-Partition | Where-Object –FilterScript { $_.isBoot -Eq "True" } | Select-Object disknumber
+# $DiskNumber = $DiskReserved.disknumber
+# $DiskReserved = Get-Partition -DiskNumber $DiskNumber | Measure-Object -Property Size -Sum
+# $DiskSize = Get-Disk -Number $DiskNumber | Select-Object size
+# $spase = $DiskSize.size - $DiskReserved.sum
+# if ($spase -ge 42949672960)
+# {
+# 	do
+# 	{
+# 		$selection = Read-Host "The system disk has some unallocated space,would you like to allocate it?: [y/n]"
+# 		if ($selection -eq "y" -or $selection -eq "n")
+# 		{
+# 			$ok_selection = $true
+# 		}
+# 		else
+# 		{
+# 			$ok_selection = $false
+# 		}
+# 	}
+# 	until ($ok_selection)
+# 	if ($selection -eq "y")
+# 	{
+# 		$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'd:'"
+# 		if ($drive.DriveType -eq 3)
+# 		{
+# 			New-Partition -DiskNumber $DiskNumber -DriveLetter S -UseMaximumSize | Out-Null
+# 			Format-Volume -DriveLetter S -FileSystem NTFS -NewFileSystemLabel SSD -Confirm:$false | Out-Null
+# 		}
+# 		elseif ($drive.DriveType -eq 5 -or $drive.DriveType -eq 2)
+# 		{
+# 			$selection1 = Read-Host "Drive Letter D is already assigned to either Compact disk or Removable disk,would you like to change Drive Letter?: [y/n]"
+# 			if ($selection1 -eq "y")
+# 			{
+# 				#$Eject =  New-Object -comObject Shell.Application
+# 				#$Eject.NameSpace(17).ParseName($drive.driveletter).InvokeVerb("Eject")
+# 				Set-WmiInstance -input $drive -Arguments @{ DriveLetter = "F:" } | Out-Null
+# 				New-Partition -DiskNumber $DiskNumber -DriveLetter D -UseMaximumSize | Out-Null
+# 				Format-Volume -DriveLetter D -FileSystem NTFS -NewFileSystemLabel Storage -Confirm:$false | Out-Null
+# 			}
+# 			elseif ($selection1 -eq "n")
+# 			{
+# 				# do nothing
+# 			}
+# 		}
+# 		else
+# 		{
+# 			New-Partition -DiskNumber $DiskNumber -DriveLetter D -UseMaximumSize | Out-Null
+# 			Format-Volume -DriveLetter D -FileSystem NTFS -NewFileSystemLabel Storage -Confirm:$false | Out-Null
+# 		}
+# 	}
+# }
 #----------------------------------------------
 write-host "Checking the name of the host"
 write-host "---------------------------"
