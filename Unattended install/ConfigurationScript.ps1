@@ -101,16 +101,16 @@ if ($countRAW.count -ge 1)
 	until ($ok_selection)
 	if ($selection -eq "y")
 	{
-		$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'd:'"
+		$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'S:'"
 		if ($drive.DriveType -eq 3)
 		{
-			write-host "The system already has a local disk that is assigned Drive Letter D"
+			write-host "The system already has a local disk that is assigned Drive Letter S"
 		}
 		else
 		{
 			if ($drive.DriveType -eq 5 -or $drive.DriveType -eq 2)
 			{
-				$selection1 = Read-Host "Drive Letter D is already assigned to Compact Disk or Removable Disk, would you like to change Drive Letter?: [y/n]"
+				$selection1 = Read-Host "Drive Letter S is already assigned to Compact Disk or Removable Disk, would you like to change Drive Letter?: [y/n]"
 				if ($selection1 -eq "y")
 				{
 					#$Eject =  New-Object -comObject Shell.Application
@@ -124,8 +124,8 @@ if ($countRAW.count -ge 1)
 			}
 			$DiskNumber = Get-Disk | Where-Object PartitionStyle –Eq "RAW" | Where-Object BusType -ne "ISCSI" | Where-Object BusType -ne "USB" | Select-Object Number -First 1
 			Initialize-Disk -Number $DiskNumber.Number -PartitionStyle GPT
-			New-Partition -DiskNumber $DiskNumber.Number -DriveLetter D -UseMaximumSize | Out-Null
-			Format-Volume -DriveLetter D -FileSystem NTFS -NewFileSystemLabel Storage -Confirm:$false | Out-Null
+			New-Partition -DiskNumber $DiskNumber.Number -DriveLetter S -UseMaximumSize | Out-Null
+			Format-Volume -DriveLetter S -FileSystem NTFS -NewFileSystemLabel Storage -Confirm:$false | Out-Null
 		}
 	}
 }
@@ -483,7 +483,7 @@ write-host "
 Checking and configuring network interfaces"
 write-host "---------------------------"
 $ManagementNIC = Get-NetAdapter | Where-Object –FilterScript { $_.name -like "management" }
-if ($ManagementNIC -eq $null)
+if ($null -eq $ManagementNIC)
 {
 	Write-Host "Management interfaces....False." -ForegroundColor Red
 	do

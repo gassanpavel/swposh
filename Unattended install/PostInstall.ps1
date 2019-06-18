@@ -21,13 +21,20 @@ $NetFramework48Uri              = 'https://go.microsoft.com/fwlink/?linkid=20886
 
 ### Configure disks
 
-. .\Write-menu.ps1
+### Import script to show Menu
+. .\Write-Menu.ps1
+
+### If "CanPool" disks >= 2 - create Storage Space
+
 if ((Get-PhysicalDisk -CanPool $true).count -ge 2) 
 {
+
+    ### Create Pool 
+
     New-StoragePool -StorageSubSystemFriendlyName "Windows Storage*" -FriendlyName "StoragePool" -PhysicalDisks (Get-PhysicalDisk -CanPool $true)
     if ((Get-PhysicalDisk | Where-Object {$_.MediaType -eq "Unspecified"}).count -ge 2)
     {
-        ### set media type
+        ### Set media type
         try{
             $HDD = Get-PhysicalDisk | Where-Object {$_.cannotpoolreason -eq "In a Pool" -and $_.MediaType -eq "Unspecified"} `
                 | Select-Object -Property FriendlyName, UniqueId, @{Name = 'Size in Gb'; Expression = {[math]::round($_.Size/1Gb)}}
@@ -54,6 +61,8 @@ if ((Get-PhysicalDisk -CanPool $true).count -ge 2)
         }
     }
 
+    ### Create Storage Tier
+
     New-StorageTier -MediaType SSD -StoragePoolFriendlyName StoragePool -FriendlyName SSDTier -ResiliencySettingName Mirror -NumberOfDataCopies 2 -Interleave 65536 | Out-Null
     New-StorageTier -MediaType HDD -StoragePoolFriendlyName StoragePool -FriendlyName HDDTier -ResiliencySettingName Parity -Interleave 65536 | Out-Null
     $SSDTier = Get-StorageTier -FriendlyName SSDTier
@@ -65,6 +74,7 @@ if ((Get-PhysicalDisk -CanPool $true).count -ge 2)
     Get-StoragePool "StoragePool" | New-VirtualDisk -FriendlyName "VD" -ResiliencySettingName "Simple" -ProvisioningType "Fixed" `
     -StorageTiers @($SSDTier, $HDDTier) -StorageTierSizes @(($SSDStorageTierSize/1), ($HDDStorageTierSize/1)) -AutoWriteCacheSize | Out-Null
 
+    ### Format Volume
 
     foreach ($disk in $D = Get-Disk | Where-Object {$_.FriendlyName -like "*VD*" -and $_.PartitionStyle -like "*RAW*"})
     {
@@ -74,6 +84,9 @@ if ((Get-PhysicalDisk -CanPool $true).count -ge 2)
     }
 
 }
+
+    ### If RAW disk count eq to 1 - create partition and format it
+    
 elseif ((Get-Disk | Where-Object {$_.PartitionStyle -eq "RAW"} | Measure-Object).Count -eq 1){
     foreach ($disk in $D = Get-Disk | Where-Object {$_.PartitionStyle -like "*RAW*"})
     {
