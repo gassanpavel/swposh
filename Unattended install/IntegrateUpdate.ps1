@@ -17,6 +17,7 @@ $UnattendXML            = "$PSScriptRoot\Autounattend.xml"
 $RescanXML              = "$PSScriptRoot\rescan_esx.xml"
 $SLAPath                = "$PSScriptRoot\SLA_LicenseAgreement.exe"
 $ConfigScript           = "$PSScriptRoot\ConfigurationScript.ps1"
+$WriteMenu              = "$PSScriptRoot\Write-Menu.ps1"
 $IPerf                  = "$PSScriptRoot\iPerf"
 $StorageTest            = "$PSScriptRoot\StorageTest_v0.8"
 $CleanUp                = "$PSScriptRoot\CleanUp.ps1"
@@ -217,6 +218,10 @@ foreach($image in $IMAGES){
 
         Write-Host "Integrating rescan XML" -NoNewline
         Copy-WithProgress -Source $RescanXML -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating Write-Menu script" -NoNewline
+        Copy-WithProgress -Source $WriteMenu -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host "Integrating Iperf" -NoNewline

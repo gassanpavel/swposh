@@ -18,6 +18,72 @@ $RegPath                        = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVe
 $NetFramework472Uri             = 'https://go.microsoft.com/fwlink/?LinkId=863265'
 $NetFramework48Uri              = 'https://go.microsoft.com/fwlink/?linkid=2088631'
 
+
+### Configure disks
+
+. .\Write-menu.ps1
+if ((Get-PhysicalDisk -CanPool $true).count -ge 2) 
+{
+    New-StoragePool -StorageSubSystemFriendlyName "Windows Storage*" -FriendlyName "StoragePool" -PhysicalDisks (Get-PhysicalDisk -CanPool $true)
+    if ((Get-PhysicalDisk | Where-Object {$_.MediaType -eq "Unspecified"}).count -ge 2)
+    {
+        ### set media type
+        try{
+            $HDD = Get-PhysicalDisk | Where-Object {$_.cannotpoolreason -eq "In a Pool" -and $_.MediaType -eq "Unspecified"} `
+                | Select-Object -Property FriendlyName, UniqueId, @{Name = 'Size in Gb'; Expression = {[math]::round($_.Size/1Gb)}}
+            if(($HDD | Measure-Object).Count -ge 1)
+            {
+                $selectHDD = Write-Menu -Title 'Select drives for HDD media type' -Entries @($HDD) -MultiSelect -Sort
+                foreach($HDDDrive in $selectHDD){
+                    Set-PhysicalDisk -MediaType HDD -UniqueId $HDDDrive.UniqueId -ErrorAction SilentlyContinue
+                }
+            }
+
+            $SSD = Get-PhysicalDisk | Where-Object {$_.cannotpoolreason -eq "In a Pool" -and $_.MediaType -eq "Unspecified"} `
+                | Select-Object -Property FriendlyName, UniqueId, @{Name = 'Size in Gb'; Expression = {[math]::round($_.Size/1Gb)}}
+            if(($SSD | Measure-Object).Count -ge 1)
+            {
+                $selectSSD = Write-Menu -Title 'Select drives for SSD media type' -Entries @($SSD) -MultiSelect -Sort
+                foreach($SSDDrive in $selectSSD){
+                    Set-PhysicalDisk -MediaType SSD -UniqueId $SSDDrive.UniqueId -ErrorAction SilentlyContinue
+                }
+            }
+        }
+        catch{
+            $_
+        }
+    }
+
+    New-StorageTier -MediaType SSD -StoragePoolFriendlyName StoragePool -FriendlyName SSDTier -ResiliencySettingName Mirror -NumberOfDataCopies 2 -Interleave 65536 | Out-Null
+    New-StorageTier -MediaType HDD -StoragePoolFriendlyName StoragePool -FriendlyName HDDTier -ResiliencySettingName Parity -Interleave 65536 | Out-Null
+    $SSDTier = Get-StorageTier -FriendlyName SSDTier
+    $HDDTier = Get-StorageTier -FriendlyName HDDTier
+    $HDDStorageTierSize = ((((((Get-PhysicalDisk | Where-Object {$_.MediaType -eq "HDD"}).size) | Measure-Object -Sum).Sum)/1Gb) - 10).ToString() + "Gb"
+    $SSDStorageTierSize = ((((((Get-PhysicalDisk | Where-Object {$_.MediaType -eq 'SSD'}).size) | Measure-Object -Sum).Sum)/1Gb) - 10).ToString() + "Gb"
+
+
+    Get-StoragePool "StoragePool" | New-VirtualDisk -FriendlyName "VD" -ResiliencySettingName "Simple" -ProvisioningType "Fixed" `
+    -StorageTiers @($SSDTier, $HDDTier) -StorageTierSizes @(($SSDStorageTierSize/1), ($HDDStorageTierSize/1)) -AutoWriteCacheSize | Out-Null
+
+
+    foreach ($disk in $D = Get-Disk | Where-Object {$_.FriendlyName -like "*VD*" -and $_.PartitionStyle -like "*RAW*"})
+    {
+        $D | Where-Object {$_.OperationalStatus -eq "Offline"} | Set-Disk -IsOffline $false 
+        Get-Disk $disk.number | Initialize-Disk  -PartitionStyle GPT -PassThru | New-Partition -DriveLetter S -UseMaximumSize `
+            | Get-Partition | Format-Volume | Set-Volume -NewFileSystemLabel "Storage"
+    }
+
+}
+elseif ((Get-Disk | Where-Object {$_.PartitionStyle -eq "RAW"} | Measure-Object).Count -eq 1){
+    foreach ($disk in $D = Get-Disk | Where-Object {$_.PartitionStyle -like "*RAW*"})
+    {
+        $D | Where-Object {$_.OperationalStatus -eq "Offline"} | Set-Disk -IsOffline $false 
+        Get-Disk $disk.number | Initialize-Disk  -PartitionStyle GPT -PassThru | New-Partition -DriveLetter S -UseMaximumSize `
+            | Get-Partition | Format-Volume | Set-Volume -NewFileSystemLabel "Storage"
+    }
+}
+
+
 ### Disable Firewall 
 
 try{
