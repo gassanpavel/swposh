@@ -23,7 +23,7 @@ $NetFramework48Uri              = 'https://go.microsoft.com/fwlink/?linkid=20886
 ### Configure disks
 
 ### Import script to show Menu
-. .\Write-Menu.ps1
+. $PSScriptRoot\Write-Menu.ps1
 
 ### If "CanPool" disks >= 2 - create Storage Space
 
