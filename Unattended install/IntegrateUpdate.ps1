@@ -225,10 +225,12 @@ foreach($image in $IMAGES){
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host "Integrating Iperf" -NoNewline
+        New-Item -ItemType Directory -Path "$WIM_MOUNT_DIR\HCA\" -Name "Iperf" -Force | Out-Null
         Copy-WithProgress -Source $IPerf -Destination "$WIM_MOUNT_DIR\HCA\Iperf\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host "Integrating StorageTest" -NoNewline
+        New-Item -ItemType Directory -Path "$WIM_MOUNT_DIR\HCA\" -Name "StorageTest" -Force | Out-Null
         Copy-WithProgress -Source $StorageTest -Destination "$WIM_MOUNT_DIR\HCA\StorageTest\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 

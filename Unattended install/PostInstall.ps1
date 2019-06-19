@@ -2,6 +2,7 @@ Clear-Host
 Import-Module BitsTransfer
 
 ### Define variables
+
 $Manufacturer                   = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 $OSVersion                      = ((Get-CimInstance Win32_OperatingSystem).Caption).split(" ")[3]
 $VCppDownloadUri                = 'https://aka.ms/vs/16/release/VC_redist.x64.exe'
@@ -85,7 +86,7 @@ if ((Get-PhysicalDisk -CanPool $true).count -ge 2)
 
 }
 
-    ### If RAW disk count eq to 1 - create partition and format it
+### If RAW disk count eq to 1 - create partition and format it
 
 elseif ((Get-Disk | Where-Object {$_.PartitionStyle -eq "RAW"} | Measure-Object).Count -eq 1){
     foreach ($disk in $D = Get-Disk | Where-Object {$_.PartitionStyle -like "*RAW*"})
