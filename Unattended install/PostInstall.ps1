@@ -9,7 +9,8 @@ $VCppDownloadUri                = 'https://aka.ms/vs/16/release/VC_redist.x64.ex
 $VMwareToolsDownloadUri         = 'https://packages.vmware.com/tools/esx/latest/windows/x64/index.html'
 $VMwareToolsVersion             = ((Invoke-WebRequest -Uri $VMWareToolsDownloadUri -UseBasicParsing).links | Where-Object {$_.href -like 'VMware*'}).href
 $OMSADownloadUri                = 'https://downloads.dell.com/FOLDER05170353M/1/OM-SrvAdmin-Dell-Web-WINX64-9.2.0-3142_A00.exe'
-$StarWindVSANDownloadUri        = 'https://www.starwindsoftware.com/tmplink/starwind-v8.exe'
+#$StarWindVSANDownloadUri        = 'https://www.starwindsoftware.com/tmplink/starwind-v8.exe'
+$StarWindVSANDownloadUri        = 'https://f002.backblazeb2.com/file/SW-Support/StarWind_8.0_R8_20181121_12658_6517_434_1072-R8-release.exe'
 $StarWindHealthDownloadUri      = 'https://www.starwindsoftware.com/tmplink/starwindhealthservice.zip'
 $MellanoxWinOFDownloadUri       = 'http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_52000_All_win' + "$OSVersion" + '_x64.exe'
 $MellanoxWinOF2DownloadUri      = 'http://www.mellanox.com/downloads/WinOF/MLNX_WinOF2-2_20_50000_All_x64.exe'
@@ -22,7 +23,7 @@ $NetFramework48Uri              = 'https://go.microsoft.com/fwlink/?linkid=20886
 
 ### Configure disks
 
-### Import script to show Menu
+### Import script to show Menu https://github.com/QuietusPlus/Write-Menu
 . $PSScriptRoot\Write-Menu.ps1
 
 ### If "CanPool" disks >= 2 - create Storage Space
@@ -57,33 +58,33 @@ if ((Get-PhysicalDisk -CanPool $true).count -ge 2)
                 }
             }
         }
-        catch{
+        catch
+        {
             $_
         }
-    }
 
-    ### Create Storage Tier
+        ### Create Storage Tier
 
-    New-StorageTier -MediaType SSD -StoragePoolFriendlyName StoragePool -FriendlyName SSDTier -ResiliencySettingName Mirror -NumberOfDataCopies 2 -Interleave 65536 | Out-Null
-    New-StorageTier -MediaType HDD -StoragePoolFriendlyName StoragePool -FriendlyName HDDTier -ResiliencySettingName Parity -Interleave 65536 | Out-Null
-    $SSDTier = Get-StorageTier -FriendlyName SSDTier
-    $HDDTier = Get-StorageTier -FriendlyName HDDTier
-    $HDDStorageTierSize = ((((((Get-PhysicalDisk | Where-Object {$_.MediaType -eq "HDD"}).size) | Measure-Object -Sum).Sum)/1Gb) - 10).ToString() + "Gb"
-    $SSDStorageTierSize = ((((((Get-PhysicalDisk | Where-Object {$_.MediaType -eq 'SSD'}).size) | Measure-Object -Sum).Sum)/1Gb) - 10).ToString() + "Gb"
+        New-StorageTier -MediaType SSD -StoragePoolFriendlyName StoragePool -FriendlyName SSDTier -ResiliencySettingName Mirror -NumberOfDataCopies 2 -Interleave 65536 | Out-Null
+        New-StorageTier -MediaType HDD -StoragePoolFriendlyName StoragePool -FriendlyName HDDTier -ResiliencySettingName Parity -Interleave 65536 | Out-Null
+        $SSDTier = Get-StorageTier -FriendlyName SSDTier
+        $HDDTier = Get-StorageTier -FriendlyName HDDTier
+        $HDDStorageTierSize = ((((((Get-PhysicalDisk | Where-Object {$_.MediaType -eq "HDD"}).size) | Measure-Object -Sum).Sum)/1Gb) - 10).ToString() + "Gb"
+        $SSDStorageTierSize = ((((((Get-PhysicalDisk | Where-Object {$_.MediaType -eq 'SSD'}).size) | Measure-Object -Sum).Sum)/1Gb) - 10).ToString() + "Gb"
 
 
-    Get-StoragePool "StoragePool" | New-VirtualDisk -FriendlyName "VD" -ResiliencySettingName "Simple" -ProvisioningType "Fixed" `
-    -StorageTiers @($SSDTier, $HDDTier) -StorageTierSizes @(($SSDStorageTierSize/1), ($HDDStorageTierSize/1)) -AutoWriteCacheSize | Out-Null
+        Get-StoragePool "StoragePool" | New-VirtualDisk -FriendlyName "VD" -ResiliencySettingName "Simple" -ProvisioningType "Fixed" `
+        -StorageTiers @($SSDTier, $HDDTier) -StorageTierSizes @(($SSDStorageTierSize/1), ($HDDStorageTierSize/1)) -AutoWriteCacheSize | Out-Null
 
-    ### Format Volume
+        ### Format Volume
 
-    foreach ($disk in $D = Get-Disk | Where-Object {$_.FriendlyName -like "*VD*" -and $_.PartitionStyle -like "*RAW*"})
-    {
-        $D | Where-Object {$_.OperationalStatus -eq "Offline"} | Set-Disk -IsOffline $false 
-        Get-Disk $disk.number | Initialize-Disk  -PartitionStyle GPT -PassThru | New-Partition -DriveLetter S -UseMaximumSize `
-            | Get-Partition | Format-Volume | Set-Volume -NewFileSystemLabel "Storage"
-    }
-
+        foreach ($disk in $D = Get-Disk | Where-Object {$_.FriendlyName -like "*VD*" -and $_.PartitionStyle -like "*RAW*"})
+        {
+            $D | Where-Object {$_.OperationalStatus -eq "Offline"} | Set-Disk -IsOffline $false 
+            Get-Disk $disk.number | Initialize-Disk  -PartitionStyle GPT -PassThru | New-Partition -DriveLetter S -UseMaximumSize `
+                | Get-Partition | Format-Volume | Set-Volume -NewFileSystemLabel "Storage"
+        }
+    }   
 }
 
 ### If RAW disk count eq to 1 - create partition and format it
