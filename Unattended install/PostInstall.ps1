@@ -347,7 +347,8 @@ if ($Manufacturer -like "VMware*") {
                 break
             }
             catch{
-                Write-Host "IP address is not valid. Try again"
+                Clear-Host
+                Write-Host "`nIP address is not valid. Try again`n"
             }
         }
         $SecureStringESXiPassword = Read-Host -AsSecureString "Please enter your password"
@@ -356,87 +357,84 @@ if ($Manufacturer -like "VMware*") {
         Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
         Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
         if (!(Connect-VIServer -Server $ESXiIp -User root -Password $ESXiPassword -ErrorAction SilentlyContinue)){
+            Clear-Host
             Write-Host "`nCant connect to ESXi server. Check your IP or credentials and try again`n" -ForegroundColor Red
             ESXiConnect
             break
         }
         else{
             Write-Host "`tOK" -ForegroundColor Green
-            break
-        }
-    }
-
-    try{
-        ### Connect to ESXi host
-        ESXiConnect
-        Write-Host "Connecting to ESXi host" -NoNewline
-        Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
-        Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
-        Connect-VIServer -Server $ESXiIp -User root -Password $ESXiPassword
-        Write-Host "`tOK" -ForegroundColor Green
-
-        ### Create HEALTH USER
-
-        Write-Host "Create HEALTH USER" -NoNewline
-        New-VMHostAccount -Id $StarWindHealthUser -Password $StarWindHealthPassword -Description "Vendor Support" -ErrorAction SilentlyContinue
-        New-VIRole -Name StarWind -ErrorAction SilentlyContinue
-        Set-VIRole -Role StarWind -AddPrivilege Inventory -ErrorAction SilentlyContinue
-        Set-VIRole -Role StarWind -AddPrivilege Configuration -ErrorAction SilentlyContinue
-        Set-VIRole -Role StarWind -AddPrivilege 'Local operations' -ErrorAction SilentlyContinue
-        Set-VIRole -Role StarWind -AddPrivilege CIM -ErrorAction SilentlyContinue
-        Set-VIRole -Role StarWind -AddPrivilege 'vSphere Replication' -ErrorAction SilentlyContinue
-        Set-VIRole -Role StarWind -AddPrivilege Settings -ErrorAction SilentlyContinue
-        Set-VIRole -Role StarWind -AddPrivilege Diagnostics -ErrorAction SilentlyContinue
-        New-VIPermission -Role StarWind -Principal Health -Entity (Get-VMHost) -ErrorAction SilentlyContinue
-        Disconnect-VIServer -Server * -Confirm:$false -ErrorAction SilentlyContinue
-        Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`tError`n" -ForegroundColor Red
-        $_
-    }
-    
-    ### Create rescan_script.ps1
-    try{
-         Write-Host "Creating RescanScript" -NoNewline
-         $RescanScript = @"
-        Import-Module VMware.PowerCLI
-        `$counter = 0
-        if (`$counter -eq 0){
-        `t	Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:`$false | Out-Null
-        }
-        `$ESXiHost = "$ESXiIp"
-        `$ESXiUser = "$StarWindHealthUser"
-        `$ESXiPassword = "$StarWindHealthPassword"
-        Connect-VIServer `$ESXiHost -User `$ESXiUser -Password `$ESXiPassword | Out-Null
-        Get-VMHostStorage `$ESXiHost -RescanAllHba | Out-Null
-        Get-ScsiLun -VMHost `$ESXiHost -LunType disk | Where-Object Vendor -EQ "STARWIND"|
-        Where-Object ConsoleDeviceName -NE " " | Set-ScsiLun -MultipathPolicy RoundRobin -CommandsToSwitchPath 1 |
-        Out-Null
-        Disconnect-VIServer `$ESXiHost -Confirm:`$false
-        `$file = Get-Content "`$PSScriptRoot\rescan_script.ps1"
-        if (`$file[1] -ne "```$counter = 1") {
-        `t    `$file[1] = "```$counter = 1"
-        `t   `$file > "`$PSScriptRoot\rescan_script.ps1"
-        }
+            try{
+                ### Connect to ESXi host
+                
+                Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
+                Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
+       
+                ### Create HEALTH USER
+        
+                Write-Host "Create HEALTH USER" -NoNewline
+                New-VMHostAccount -Id $StarWindHealthUser -Password $StarWindHealthPassword -Description "Vendor Support" | Out-Null
+                New-VIRole -Name StarWind | Out-Null
+                Set-VIRole -Role StarWind -AddPrivilege Inventory | Out-Null
+                Set-VIRole -Role StarWind -AddPrivilege Configuration | Out-Null
+                Set-VIRole -Role StarWind -AddPrivilege 'Local operations' | Out-Null
+                Set-VIRole -Role StarWind -AddPrivilege CIM | Out-Null
+                Set-VIRole -Role StarWind -AddPrivilege 'vSphere Replication' | Out-Null
+                Set-VIRole -Role StarWind -AddPrivilege Settings | Out-Null
+                Set-VIRole -Role StarWind -AddPrivilege Diagnostics | Out-Null
+                New-VIPermission -Role StarWind -Principal Health -Entity (Get-VMHost) | Out-Null
+                Disconnect-VIServer -Server * -Confirm:$false | Out-Null
+                Write-Host "`tOK" -ForegroundColor Green
+            }
+            catch{
+                Write-Host "`tError`n" -ForegroundColor Red
+                $_
+            }
+            try{
+                Write-Host "Creating RescanScript" -NoNewline
+                $RescanScript = @"
+Import-Module VMware.PowerCLI
+`$counter = 0
+if (`$counter -eq 0){
+`t	Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:`$false | Out-Null
+}
+`$ESXiHost = "$ESXiIp"
+`$ESXiUser = "$StarWindHealthUser"
+`$ESXiPassword = "$StarWindHealthPassword"
+Connect-VIServer `$ESXiHost -User `$ESXiUser -Password `$ESXiPassword | Out-Null
+Get-VMHostStorage `$ESXiHost -RescanAllHba | Out-Null
+Get-ScsiLun -VMHost `$ESXiHost -LunType disk | Where-Object Vendor -EQ "STARWIND"|
+Where-Object ConsoleDeviceName -NE " " | Set-ScsiLun -MultipathPolicy RoundRobin -CommandsToSwitchPath 1 |
+Out-Null
+Disconnect-VIServer `$ESXiHost -Confirm:`$false
+`$file = Get-Content "`$PSScriptRoot\rescan_script.ps1"
+if (`$file[1] -ne "```$counter = 1") {
+`t    `$file[1] = "```$counter = 1"
+`t   `$file > "`$PSScriptRoot\rescan_script.ps1"
+}
 "@
-        $RescanScript | Out-File -FilePath C:\rescan_script.ps1 -Encoding utf8
-        Write-Host "`tOK" -ForegroundColor Green
+               $RescanScript | Out-File -FilePath C:\rescan_script.ps1 -Encoding utf8
+               Write-Host "`tOK" -ForegroundColor Green
+           }
+           catch{
+                Write-Host "`tError`n" -ForegroundColor Red
+                $_
+           }
+        try{
+            Write-Host "Creating scheduler task for Rescan_script.ps1" -NoNewline
+            Start-Process -FilePath schtasks.exe -ArgumentList "/Create /RU administrator /RP StarWind2015 /TN ""Rescan ESXi"" /XML ""$PSScriptRoot""\rescan_esx.xml"" " -Wait
+            Write-Host "`tOK" -ForegroundColor Green
+        }
+        catch{
+            Write-Host "`tError`n" -ForegroundColor Red
+            $_
+        }
+
+        }
     }
-    catch{
-         Write-Host "`tError`n" -ForegroundColor Red
-         $_
-    }
-    
-    try{
-        Write-Host "Creating scheduler task for Rescan_script.ps1" -NoNewline
-        Start-Process -FilePath schtasks.exe -ArgumentList "/Create /RU administrator /RP StarWind2015 /TN ""Rescan ESXi"" /XML ""$PSScriptRoot""\rescan_esx.xml"" " -Wait
-        Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`tError`n" -ForegroundColor Red
-        $_
-    }
+
+    ESXiConnect
+
 }
 
 else{ ### Baremetal part of postinstall
