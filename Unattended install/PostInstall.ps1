@@ -168,7 +168,7 @@ try{
         -Description "Downloading .Net 4.7.2 framework"
     Write-Host "`tOK" -ForegroundColor Green
 
-    ### Install C++ Redistribution
+    ### Install .Net 4.7.2 framework
     Write-Host "Installing .Net 4.7.2 framework" -NoNewline
     Start-Process -FilePath $PSScriptRoot"\DotNet472.exe" -ArgumentList "/q /norestart" -Wait
     Write-Host "`tOK" -ForegroundColor Green
