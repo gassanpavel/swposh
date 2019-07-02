@@ -21,6 +21,8 @@ $WriteMenu              = "$PSScriptRoot\Write-Menu.ps1"
 $IPerf                  = "$PSScriptRoot\iPerf"
 $StorageTest            = "$PSScriptRoot\StorageTest_v0.8"
 $CleanUp                = "$PSScriptRoot\CleanUp.ps1"
+$ESXCliVib              = "$PSScriptRoot\esxcli-shell-1.1.0-15.vib"
+$PercCliVib             = "$PSScriptRoot\vmware-perccli-007.0529.0000.0000.vib"
 $EXTRACT_DIR            = "$ISO_PARENT_DIR\BUILD\EXTRACT_ISO"
 $LCU_DIR                = "$ISO_PARENT_DIR\BUILD\LCU"
 $OUTPUT_DIR             = "$ISO_PARENT_DIR\BUILD\OUTPUT_ISO"
@@ -236,6 +238,14 @@ foreach($image in $IMAGES){
 
         Write-Host "Integrating CleanUp script" -NoNewline
         Copy-WithProgress -Source $CleanUp -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating ESXCliVib script" -NoNewline
+        Copy-WithProgress -Source $ESXCliVib -Destination "$WIM_MOUNT_DIR\HCA\"
+        Write-Host "`t[OK]" -Foregroundcolor Green
+
+        Write-Host "Integrating PERCCliVib script" -NoNewline
+        Copy-WithProgress -Source $PercCliVib -Destination "$WIM_MOUNT_DIR\HCA\"
         Write-Host "`t[OK]" -Foregroundcolor Green
 
         Write-Host ""(Get-Date).ToString("dd/MM/yyyy HH:mm:ss")" Unmounting WIM image ["$image.ImageName"] with index ["$image.ImageIndex"]" -NoNewline

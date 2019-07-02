@@ -20,7 +20,6 @@ $RegPath                        = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVe
 $NetFramework472Uri             = 'https://go.microsoft.com/fwlink/?LinkId=863265'
 $NetFramework48Uri              = 'https://go.microsoft.com/fwlink/?linkid=2088631'
 
-
 ### Configure disks
 
 ### Import script to show Menu https://github.com/QuietusPlus/Write-Menu
@@ -197,91 +196,21 @@ catch{
 
 ### Download and install C++ Redistribution
 
-if (!(Test-Path -Path HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\16.0\)){
-    try{
-        ### Download C++ Redistribution
-        Write-Host "Downloading Visual C++ Redistribution" -NoNewline
-        Start-BitsTransfer -Source $VCppDownloadUri -Destination $PSScriptRoot"\VC_redist.x64.exe" `
-            -Description "Downloading Visual C++ Redistribution"
-        Write-Host "`tOK" -ForegroundColor Green
-    
-        ### Install C++ Redistribution
-        Write-Host "Installing Visual C++ Redistribution" -NoNewline
-        Start-Process -FilePath $PSScriptRoot"\VC_redist.x64.exe" -ArgumentList "/install /q /norestart" -Wait
-        Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`tError`n" -ForegroundColor Red
-        Write-Host "Cant download VC++. Please download it from $VCppDownloadUri and install manually"
-    }
-}
-
-### Download latest StarWindHealthService
-
-if (!(Test-Path -Path $PSScriptRoot"\starwindhealthservice.zip")){
-    try{
-        Write-Host "Downloading latest StarWindHealthService" -NoNewline
-        Start-BitsTransfer -Source $StarWindHealthDownloadUri -Destination $PSScriptRoot"\starwindhealthservice.zip" `
-            -Description "Downloading latest StarWindHealthService"
-        Write-Host "`tOK" -ForegroundColor Green
-
-    ### Extracting StarWindHealthService
-
-        Write-Host "Extract StarWindHealthService" -NoNewline
-        Expand-Archive -Path $PSScriptRoot"\starwindhealthservice.zip" -DestinationPath $PSScriptRoot"\" -Force
-        Expand-Archive -Path $PSScriptRoot"\starwindhealthservice\starwindhealthservice.zip" `
-            -DestinationPath $PSScriptRoot"\starwindhealthservice" -Force
-        ### Yes, I know, this is stupid,
-        ### to place the archive into the archive, 
-        ### but our web development department, 
-        ### which is responsible for the operation of the FTP server, 
-        ### cannot change MIME types so that the archived file is downloaded by the archive without changes ... ((((
-        Write-Host "`tOK" -ForegroundColor Green
-
-    ### Installing StarWindHealthService
-
-        Write-Host "Installing StarWindHealthService" -NoNewline
-        Start-Process -FilePath $PSScriptRoot"\starwindhealthservice\starwindhealthservice.exe" `
-            -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS' -Wait
-        Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`tError`n" -ForegroundColor Red
-        Write-Host "Cant download StaWindHealth. Please download it from $StarWindHealthDownloadUri and install manually"
-    }
-}
-
-### Download latest StarWindVSAN build
-
-if (!(Test-Path -Path $PSScriptRoot"\starwind.exe")){
-    try{
-        Write-Host "Download latest StarWindVSAN build" -NoNewline
-        Start-BitsTransfer -Source $StarWindVSANDownloadUri -Destination $PSScriptRoot"\starwind.exe" `
-            -Description "Download latest StarWindVSAN build"
-        Write-Host "`tOK" -ForegroundColor Green
-    }
-    catch{
-        Write-Host "`tError`n" -ForegroundColor Red
-        Write-Host "Cant download StaWindVSAN. Please download it from $StarWindVSANDownloadUri and install manually"
-    }
-}
-
-### Install StarWindVSAN
-
 try{
-    Write-Host "Install StarWindVSAN" -NoNewline
-    Start-Process -FilePath $PSScriptRoot"\starwind.exe" -Wait
+    ### Download C++ Redistribution
+    Write-Host "Downloading Visual C++ Redistribution" -NoNewline
+    Start-BitsTransfer -Source $VCppDownloadUri -Destination $PSScriptRoot"\VC_redist.x64.exe" `
+        -Description "Downloading Visual C++ Redistribution"
     Write-Host "`tOK" -ForegroundColor Green
 
-    ### Install StarWind SLA
-    Move-Item -Path $PSScriptRoot"\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe"
-    Write-Host "Install SLA LicenseAgreement" -NoNewline
-    Start-Process -FilePath "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe" -Wait
+    ### Install C++ Redistribution
+    Write-Host "Installing Visual C++ Redistribution" -NoNewline
+    Start-Process -FilePath $PSScriptRoot"\VC_redist.x64.exe" -ArgumentList "/install /q /norestart" -Wait
     Write-Host "`tOK" -ForegroundColor Green
 }
 catch{
     Write-Host "`tError`n" -ForegroundColor Red
-    $_
+    Write-Host "Cant download VC++. Please download it from $VCppDownloadUri and install manually"
 }
 
 ### Set ConfigurationScript to next boot
@@ -307,92 +236,151 @@ catch{
     Write-Host "`tError`n"
 }
 
-### Check manufacturer info - Baremetal or ESXi
+function InstallStarWindVSAN{
+    try{
+        Write-Host "Download latest StarWindVSAN build" -NoNewline
+        Start-BitsTransfer -Source $StarWindVSANDownloadUri -Destination $PSScriptRoot"\starwind.exe" `
+            -Description "Download latest StarWindVSAN build"
+        Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        Write-Host "Cant download StaWindVSAN. Please download it from $StarWindVSANDownloadUri and install manually"
+    }
+    
+    
+    ### Install StarWindVSAN
+    
+    try{
+        Write-Host "Install StarWindVSAN" -NoNewline
+        Start-Process -FilePath $PSScriptRoot"\starwind.exe" -Wait
+        Write-Host "`tOK" -ForegroundColor Green
+    
+        ### Install StarWind SLA
+        Move-Item -Path $PSScriptRoot"\SLA_LicenseAgreement.exe" -Destination "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe"
+        Write-Host "Install SLA LicenseAgreement" -NoNewline
+        Start-Process -FilePath "C:\Program Files\StarWind Software\StarWind\SLA_LicenseAgreement.exe" -Wait
+        Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
+    }
+}
 
-if ($Manufacturer -like "VMware*") {
-    Write-Host "###This is ESXi HOST!###" -ForegroundColor Green
-    if (!(Test-Path -Path $PSScriptRoot"\$VMwareToolsVersion")){
+function InstallStarWindHealthService{
+    try{
+        Write-Host "Downloading latest StarWindHealthService" -NoNewline
+        Start-BitsTransfer -Source $StarWindHealthDownloadUri -Destination $PSScriptRoot"\starwindhealthservice.zip" `
+            -Description "Downloading latest StarWindHealthService"
+        Write-Host "`tOK" -ForegroundColor Green
+    
+    ### Extracting StarWindHealthService
+    
+        Write-Host "Extract StarWindHealthService" -NoNewline
+        Expand-Archive -Path $PSScriptRoot"\starwindhealthservice.zip" -DestinationPath $PSScriptRoot"\" -Force
+        Expand-Archive -Path $PSScriptRoot"\starwindhealthservice\starwindhealthservice.zip" `
+            -DestinationPath $PSScriptRoot"\starwindhealthservice" -Force
+        ### Yes, I know, this is stupid,
+        ### to place the archive into the archive, 
+        ### but our web development department, 
+        ### which is responsible for the operation of the FTP server, 
+        ### cannot change MIME types so that the archived file is downloaded by the archive without changes ... ((((
+        Write-Host "`tOK" -ForegroundColor Green
+    
+    ### Installing StarWindHealthService
+    
+        Write-Host "Installing StarWindHealthService" -NoNewline
+        Start-Process -FilePath $PSScriptRoot"\starwindhealthservice\starwindhealthservice.exe" `
+            -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS' -Wait
+        Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        Write-Host "Cant download StaWindHealth. Please download it from $StarWindHealthDownloadUri and install manually"
+    }
+}
 
-        ### Download latest Vmware tools
+function InstallVMwareStuff{
+    try{
+        Write-Host "Downloading latest Vmware tools" -NoNewline
+        Start-BitsTransfer -Source ($VMwareToolsDownloadUri.Replace('index.html', $VMwareToolsVersion)) `
+            -Destination $PSScriptRoot"\$VMwareToolsVersion" `
+            -Description "Downloading latest Vmware tools"
+        Write-Host "`tOK" -ForegroundColor Green
 
+    ### Install VMware tools
+
+        Write-Host "Installing VMware tools" -NoNewline
+        Start-Process -FilePath $PSScriptRoot"\$VMwareToolsVersion" -ArgumentList '/S /v "/qn REBOOT=R ADDLOCAL=ALL"' -Wait
+        Write-Host "`tOK" -ForegroundColor Green
+
+        Write-Host "Installing powerCLI" -NoNewline
+        Install-Module -Name VMware.PowerCLI -Scope AllUsers -Confirm:$false -Force | Out-Null
+        Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
+    }
+
+### Create HEALTH USER on ESXi host
+
+function ESXiConnect{
+    while ($true){
         try{
-            Write-Host "Downloading latest Vmware tools" -NoNewline
-            Start-BitsTransfer -Source ($VMwareToolsDownloadUri.Replace('index.html', $VMwareToolsVersion)) `
-                -Destination $PSScriptRoot"\$VMwareToolsVersion" `
-                -Description "Downloading latest Vmware tools"
-            Write-Host "`tOK" -ForegroundColor Green
+            [ipaddress]$ESXiIp = read-host "Type IP address of the local ESXi server"
+            break
+        }
+        catch{
+            Clear-Host
+            Write-Host "`nIP address is not valid. Try again`n"
+        }
+    }
 
-        ### Install VMware tools
+    $SecureStringESXiPassword = Read-Host -AsSecureString "Please enter your password"
+    $ESXiPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureStringESXiPassword)) 
+    Write-Host "Connecting to ESXi host" -NoNewline
+    Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
+    Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
+    if (!(Connect-VIServer -Server $ESXiIp -User root -Password $ESXiPassword -ErrorAction SilentlyContinue)){
+        Clear-Host
+        Write-Host "`nCant connect to ESXi server. Check your IP or credentials and try again`n" -ForegroundColor Red
+        ESXiConnect
+        break
+    }
+    
+    else{
+        Write-Host "`tOK" -ForegroundColor Green
+        try{
+            ### Connect to ESXi host
+            
+            Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
+            Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
 
-            Write-Host "Installing VMware tools" -NoNewline
-            Start-Process -FilePath $PSScriptRoot"\$VMwareToolsVersion" -ArgumentList '/S /v "/qn REBOOT=R ADDLOCAL=ALL"' -Wait
-            Write-Host "`tOK" -ForegroundColor Green
-
-            Write-Host "Installing powerCLI" -NoNewline
-            Install-Module -Name VMware.PowerCLI -Scope AllUsers -Confirm:$false -Force | Out-Null
+            ### Create HEALTH USER
+    
+            Write-Host "Create HEALTH USER" -NoNewline
+            New-VMHostAccount -Id $StarWindHealthUser -Password $StarWindHealthPassword -Description "Vendor Support" | Out-Null
+            New-VIRole -Name StarWind | Out-Null
+            Set-VIRole -Role StarWind -AddPrivilege Inventory | Out-Null
+            Set-VIRole -Role StarWind -AddPrivilege Configuration | Out-Null
+            Set-VIRole -Role StarWind -AddPrivilege 'Local operations' | Out-Null
+            Set-VIRole -Role StarWind -AddPrivilege CIM | Out-Null
+            Set-VIRole -Role StarWind -AddPrivilege 'vSphere Replication' | Out-Null
+            Set-VIRole -Role StarWind -AddPrivilege Settings | Out-Null
+            Set-VIRole -Role StarWind -AddPrivilege Diagnostics | Out-Null
+            New-VIPermission -Role StarWind -Principal Health -Entity (Get-VMHost) | Out-Null
+            Disconnect-VIServer -Server * -Confirm:$false | Out-Null
             Write-Host "`tOK" -ForegroundColor Green
         }
         catch{
             Write-Host "`tError`n" -ForegroundColor Red
             $_
         }
-    }
-    
-    ### Create HEALTH USER on ESXi host
-
-    function ESXiConnect{
-        while ($true){
-            try{
-                [ipaddress]$ESXiIp = read-host "Type IP address of the local ESXi server"
-                break
-            }
-            catch{
-                Clear-Host
-                Write-Host "`nIP address is not valid. Try again`n"
-            }
-        }
-        $SecureStringESXiPassword = Read-Host -AsSecureString "Please enter your password"
-        $ESXiPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureStringESXiPassword)) 
-        Write-Host "Connecting to ESXi host" -NoNewline
-        Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
-        Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
-        if (!(Connect-VIServer -Server $ESXiIp -User root -Password $ESXiPassword -ErrorAction SilentlyContinue)){
-            Clear-Host
-            Write-Host "`nCant connect to ESXi server. Check your IP or credentials and try again`n" -ForegroundColor Red
-            ESXiConnect
-            break
-        }
-        else{
-            Write-Host "`tOK" -ForegroundColor Green
-            try{
-                ### Connect to ESXi host
-                
-                Set-PowerCLIConfiguration -InvalidCertificateAction ignore -Confirm:$false | Out-Null
-                Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $true -Confirm:$false | Out-Null
-       
-                ### Create HEALTH USER
-        
-                Write-Host "Create HEALTH USER" -NoNewline
-                New-VMHostAccount -Id $StarWindHealthUser -Password $StarWindHealthPassword -Description "Vendor Support" | Out-Null
-                New-VIRole -Name StarWind | Out-Null
-                Set-VIRole -Role StarWind -AddPrivilege Inventory | Out-Null
-                Set-VIRole -Role StarWind -AddPrivilege Configuration | Out-Null
-                Set-VIRole -Role StarWind -AddPrivilege 'Local operations' | Out-Null
-                Set-VIRole -Role StarWind -AddPrivilege CIM | Out-Null
-                Set-VIRole -Role StarWind -AddPrivilege 'vSphere Replication' | Out-Null
-                Set-VIRole -Role StarWind -AddPrivilege Settings | Out-Null
-                Set-VIRole -Role StarWind -AddPrivilege Diagnostics | Out-Null
-                New-VIPermission -Role StarWind -Principal Health -Entity (Get-VMHost) | Out-Null
-                Disconnect-VIServer -Server * -Confirm:$false | Out-Null
-                Write-Host "`tOK" -ForegroundColor Green
-            }
-            catch{
-                Write-Host "`tError`n" -ForegroundColor Red
-                $_
-            }
-            try{
-                Write-Host "Creating RescanScript" -NoNewline
-                $RescanScript = @"
+        try{
+            Write-Host "Creating RescanScript" -NoNewline
+            $RescanScript = @"
 Import-Module VMware.PowerCLI
 `$counter = 0
 if (`$counter -eq 0){
@@ -413,117 +401,108 @@ if (`$file[1] -ne "```$counter = 1") {
 `t   `$file > "`$PSScriptRoot\rescan_script.ps1"
 }
 "@
-               $RescanScript | Out-File -FilePath C:\rescan_script.ps1 -Encoding utf8
-               Write-Host "`tOK" -ForegroundColor Green
-           }
-           catch{
-                Write-Host "`tError`n" -ForegroundColor Red
-                $_
-           }
-        try{
-            Write-Host "Creating scheduler task for Rescan_script.ps1" -NoNewline
-            Start-Process -FilePath schtasks.exe -ArgumentList "/Create /RU administrator /RP StarWind2015 /TN ""Rescan ESXi"" /XML ""$PSScriptRoot""\rescan_esx.xml"" " -Wait
-            Write-Host "`tOK" -ForegroundColor Green
-        }
-        catch{
+        $RescanScript | Out-File -FilePath C:\rescan_script.ps1 -Encoding utf8
+        Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
             Write-Host "`tError`n" -ForegroundColor Red
             $_
-        }
-
-        }
+    }
+    try{
+        Write-Host "Creating scheduler task for Rescan_script.ps1" -NoNewline
+        Start-Process -FilePath schtasks.exe -ArgumentList "/Create /RU administrator /RP StarWind2015 /TN ""Rescan ESXi"" /XML ""$PSScriptRoot""\rescan_esx.xml"" " -Wait
+        Write-Host "`tOK" -ForegroundColor Green
+    }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
     }
 
-    ESXiConnect
+    }
 
+ESXiConnect
+}
 }
 
-else{ ### Baremetal part of postinstall
-    Write-Host "###This is BAREMETAL HOST!###" -ForegroundColor Green
+function InstallDellOMSA{
+    try{
+    ### Download Dell OMSA
+
+        Write-Host "Downloading DELL OMSA" -NoNewline
+        Start-BitsTransfer -Source $OMSADownloadUri -Destination $PSScriptRoot"\OMSA.zip" `
+            -Description "Downloading DELL OMSA"
+        Write-Host "`tOK" -ForegroundColor Green
     
-    if ($Manufacturer -like "*Dell*")
-    {
-        ### Download Dell OMSA
-        if(!(Test-Path -Path $PSScriptRoot"\OMSA.zip")){    
-            try{
-                Write-Host "Downloading DELL OMSA" -NoNewline
-                Start-BitsTransfer -Source $OMSADownloadUri -Destination $PSScriptRoot"\OMSA.zip" `
-                    -Description "Downloading DELL OMSA"
-                Write-Host "`tOK" -ForegroundColor Green
-            
-            ### Extracting Dell OMSA
-            
-                Write-Host "Extract OMSA" -NoNewline
-                Expand-Archive -Path $PSScriptRoot"\OMSA.zip" -DestinationPath $PSScriptRoot"\OMSA" -Force
-                Write-Host "`tOK" -ForegroundColor Green
-            
-            ### Installing Dell OMSA
-            
-                Write-Host "Installing OMSA" -NoNewline
-                Start-Process -FilePath $PSScriptRoot"\OMSA\windows\SystemsManagementx64\SysMgmtx64.msi" -ArgumentList 'ADDLOCAL=ALL /qn' -Wait
-                Write-Host "`tOK" -ForegroundColor Green
-            }
-            catch{
-                Write-Host "`tError`n" -ForegroundColor Red
-                $_
-            }
-        }
-    }
+    ### Extracting Dell OMSA
     
-    ### Download Mellanox WinOF drivers
-
-    if ((Get-NetAdapter).InterfaceDescription -like 'Mellanox ConnectX-3*'){
-        if(!(Test-Path -Path $PSScriptRoot"\MLNX_VPI_WinOF.exe")){    
-            try{
-                    Write-Host "Downloading WinOF driver" -NoNewline
-                    Start-BitsTransfer -Source $MellanoxWinOFDownloadUri -Destination $PSScriptRoot"\MLNX_VPI_WinOF.exe" `
-                    -Description "Downloading WinOF driver"
-                    Write-Host "`tOK" -ForegroundColor Green
-
-                    ### Installing Mellanox WinOF Driver
-
-                    Write-Host "Installing WinOF driver" -NoNewline
-                    Start-Process -FilePath $PSScriptRoot"\MLNX_VPI_WinOF.exe" -ArgumentList ' /S /v/qn' -Wait
-                    Write-Host "`tOK" -ForegroundColor Green
-                }
-                catch{
-                    Write-Host "`tError`n" -ForegroundColor Red
-                    $_
-                }
-            }
+        Write-Host "Extract OMSA" -NoNewline
+        Expand-Archive -Path $PSScriptRoot"\OMSA.zip" -DestinationPath $PSScriptRoot"\OMSA" -Force
+        Write-Host "`tOK" -ForegroundColor Green
+    
+    ### Installing Dell OMSA
+    
+        Write-Host "Installing OMSA" -NoNewline
+        Start-Process -FilePath $PSScriptRoot"\OMSA\windows\SystemsManagementx64\SysMgmtx64.msi" -ArgumentList 'ADDLOCAL=ALL /qn' -Wait
+        Write-Host "`tOK" -ForegroundColor Green
     }
+    catch{
+        Write-Host "`tError`n" -ForegroundColor Red
+        $_
+    }
+}
 
-    ### Download Mellanox WinOF2 drivers
-
-    if ((Get-NetAdapter).InterfaceDescription -like 'Mellanox ConnectX-4*'){
-        if(!(Test-Path -Path $PSScriptRoot"\MLNX_WinOF2.exe")){  
-            try{
+function InstallMellanoxDrivers{
+    if ((Get-NetAdapter).InterfaceDescription -like 'Mellanox ConnectX-3*'){    
+        try{
                 Write-Host "Downloading WinOF driver" -NoNewline
-                Start-BitsTransfer -Source $MellanoxWinOF2DownloadUri -Destination $PSScriptRoot"\MLNX_WinOF2.exe" `
+                Start-BitsTransfer -Source $MellanoxWinOFDownloadUri -Destination $PSScriptRoot"\MLNX_VPI_WinOF.exe" `
                 -Description "Downloading WinOF driver"
                 Write-Host "`tOK" -ForegroundColor Green
 
                 ### Installing Mellanox WinOF Driver
 
                 Write-Host "Installing WinOF driver" -NoNewline
-                Start-Process -FilePath $PSScriptRoot"\MLNX_WinOF2.exe" -ArgumentList ' /S /v/qn' -Wait
+                Start-Process -FilePath $PSScriptRoot"\MLNX_VPI_WinOF.exe" -ArgumentList ' /S /v/qn' -Wait
                 Write-Host "`tOK" -ForegroundColor Green
             }
             catch{
                 Write-Host "`tError`n" -ForegroundColor Red
                 $_
             }
-        }
     }
 
-    ### Install Roles and Features
+    ### Download Mellanox WinOF2 drivers
+
+    if ((Get-NetAdapter).InterfaceDescription -like 'Mellanox ConnectX-4*'){
+        try{
+            Write-Host "Downloading WinOF driver" -NoNewline
+            Start-BitsTransfer -Source $MellanoxWinOF2DownloadUri -Destination $PSScriptRoot"\MLNX_WinOF2.exe" `
+            -Description "Downloading WinOF driver"
+            Write-Host "`tOK" -ForegroundColor Green
+
+            ### Installing Mellanox WinOF Driver
+
+            Write-Host "Installing WinOF driver" -NoNewline
+            Start-Process -FilePath $PSScriptRoot"\MLNX_WinOF2.exe" -ArgumentList ' /S /v/qn' -Wait
+            Write-Host "`tOK" -ForegroundColor Green
+        }
+        catch{
+            Write-Host "`tError`n" -ForegroundColor Red
+            $_
+        }
+    }
+}
+
+function InstallRolesAndFeatures{
+     ### Install Roles and Features
     
     ### Install Hyper-V Role
 
     try{
-    Write-Host "Install Hyper-V Role" -NoNewline 
-    Install-WindowsFeature -Name Hyper-V -ComputerName $env:COMPUTERNAME -IncludeManagementTools
-    Write-Host "`tOK" -ForegroundColor Green
-    }
+        Write-Host "Install Hyper-V Role" -NoNewline 
+        Install-WindowsFeature -Name Hyper-V -ComputerName $env:COMPUTERNAME -IncludeManagementTools
+        Write-Host "`tOK" -ForegroundColor Green
+        }
     catch{
         Write-Host "`tError`n" -ForegroundColor Red
         $_
@@ -566,7 +545,18 @@ else{ ### Baremetal part of postinstall
     }
 }
 
-### Reboot node to run configuration script
-Write-Host "Computer will be rebooted in 15 sec..."
-Start-Sleep -Seconds 15
-Restart-Computer -Force
+function RebootHost{
+    Write-Host "Computer will be rebooted in 15 sec..."
+    Start-Sleep -Seconds 15
+    Restart-Computer -Force
+}
+
+Write-Menu -Title 'Select components to install' -Entries @{
+    'Install StarWind VSAN'             = 'InstallStarWindVSAN'
+    'Install StarWind Health Service'   = 'InstallStarWindHealthService'
+    'Install VMware stuff'              = 'InstallVMwareStuff'
+    'Install Dell OMSA'                 = 'InstallDellOMSA'
+    'Install Melalnox Drivers'          = 'InstallMellanoxDrivers'
+    'Install Roles and Features'        = 'InstallRolesAndFeatures'
+    'Reboot HOST after install'         = 'RebootHost'
+     } -MultiSelect
