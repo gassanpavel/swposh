@@ -559,4 +559,4 @@ Write-Menu -Title 'Select components to install' -Entries @{
     'Install Melalnox Drivers'          = 'InstallMellanoxDrivers'
     'Install Roles and Features'        = 'InstallRolesAndFeatures'
     'Reboot HOST after install'         = 'RebootHost'
-     } -MultiSelect
+     } -MultiSelect -Sort
